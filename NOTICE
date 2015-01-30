@@ -1,0 +1,8 @@
+This product includes software developed by Coda Hale and Yammer, Inc., which is released under the Apache License,
+Version 2.0:
+
+* storm-graphite includes a GraphiteCodec.java class, that is based on code in GraphiteReporter.java of Coda Hale's
+  Metrics library
+  (https://github.com/dropwizard/metrics/blob/master/metrics-graphite/src/main/java/com/codahale/metrics/graphite/GraphiteReporter.java).
+  Unfortunately the relevant functions in GraphiteReporter.java -- format() -- are not exposed as public functions,
+  hence we needed to create GraphiteCodec.java to mimic the functionality.
