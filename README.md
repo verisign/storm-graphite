@@ -48,6 +48,11 @@ For example, the following questions can be answered by Storm's metrics:
 * Troubleshoot Java woes: Which topologies suffer the most from long garbage collection runs?
 * Optimize hardware or Storm configuration: Which topologies are running out of memory, and when?
 
+Lastly, you will benefit even more if you are also collecting non-Storm metrics from your infrastructure, e.g.
+system/host and networking metrics.  These metrics add further context to the Storm metrics.  A simple example would
+be to correlate a high number of context switches on the Storm machines to an increased processing latency of a
+topology.
+
 
 <a name="Background"></a>
 
