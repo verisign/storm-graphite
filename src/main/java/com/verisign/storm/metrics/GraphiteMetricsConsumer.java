@@ -92,7 +92,6 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     if (registrationArgument instanceof Map) {
       configureGraphite((Map) registrationArgument);
     }
-
     stormId = context.getStormId();
   }
 
@@ -147,7 +146,11 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
    * @return A fully qualified metric name assigned to data point
    */
   private String constructMetricName(TaskInfo taskInfo, DataPoint dataPoint) {
-    return stormId.concat(".").concat(taskInfo.srcComponentId).concat(".").concat(dataPoint.name);
+    return stormId.split("-")[1]
+        .concat(".").concat(taskInfo.srcComponentId)
+        .concat(".").concat(dataPoint.name)
+        .concat(".").concat(taskInfo.srcWorkerHost)
+        .concat(".").concat((new Integer(taskInfo.srcWorkerPort)).toString());
   }
 
   protected void graphiteConnect() {
