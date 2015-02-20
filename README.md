@@ -204,6 +204,19 @@ This query provides the data for the following Grafana visualization:
 
 ![Example Grafana UI](images/grafana-visualization-example-01.png)
 
+Further examples:
+
+```
+# Java garbage collection time by topology
+groupByNode(aliasSub(storm.cluster.metrics.*.__system.GC.*.timeMs, "^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.__system.GC\.(.*)\.timeMs$", "storm.cluster.metrics.\1.__system.GC.\4.timeMs"), 3, "sumSeries")
+
+# Execution count (of Storm tuples) by bolt
+groupByNode(aliasSub(storm.cluster.metrics.*.*.__execute-count.*, "^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)\.__execute-count\.", "storm.cluster.metrics.\1.\4.__execute-count"), 4, "sumSeries")
+
+# Execution latency by bolt
+groupByNode(aliasSub(storm.cluster.metrics.*.*.__execute-latency.*, "^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)\.__execute-latency\.", "storm.cluster.metrics.\1.\4.__execute-latency"), 4, "sumSeries")
+
+```
 
 
 <a name="changelog"></a>
