@@ -190,16 +190,17 @@ storm::config_map:
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
 
 
-#### Configurating Graphite/Grafana
+#### Configuring Graphite/Grafana
 
-Unfortunately configuring Graphite or Grafana is out of scope for this documentation.  But for starters here is the
-Graphite query to construct the "Storm topologies: used Java heap space" visualization in the examples above:
+Assuming that you have a working Graphite or Grafana instance up and running, you can create queries such as the
+following to visualize your Storm metrics.  The example below is a Graphite query to construct the "Storm topologies:
+used Java heap space" visualization in the screenshots above:
 
 ```
 groupByNode(aliasSub(storm.cluster.metrics.*.__system.memory.heap.usedBytes, '^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)$', 'storm.cluster.metrics.\1.\4'), 3, 'sumSeries')
 ```
 
-This query provides the data for the following visualization:
+This query provides the data for the following Grafana visualization:
 
 ![Example Grafana UI](images/grafana-visualization-example-01.png)
 
