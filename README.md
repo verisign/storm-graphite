@@ -18,7 +18,16 @@ Table of Contents
 * <a href="#References">References</a>
 
 ---
+
+*Example 1: [Grafana](grafana-visualization-example-01.png) showing used Java heap space across all topologies*
+
+![Example Grafana UI](images/grafana-visualization-example-01.png)
+
+*Example 2: [Graphite](https://github.com/graphite-project/graphite-web) showing ack count of the "final ranker" bolt*
+*in the RollingTopWords topology from [storm-starter](https://github.com/apache/storm/tree/master/examples/storm-starter)*
+
 ![Example Graphite UI](images/Storm-Graphite-ScreenShot.png)
+
 ---
 <a name="Background"></a>
 
@@ -179,6 +188,22 @@ storm::config_map:
 ```
 
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
+
+
+#### Configurating Graphite/Grafana
+
+Unfortunately configuring Graphite or Grafana is out of scope for this documentation.  But for starters here is the
+Graphite query to construct the "Storm topologies: used Java heap space" visualization in the examples above:
+
+```
+groupByNode(aliasSub(storm.cluster.metrics.*.__system.memory.heap.usedBytes, '^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)$', 'storm.cluster.metrics.\1.\4'), 3, 'sumSeries')
+```
+
+This query provides the data for the following visualization:
+
+![Example Grafana UI](images/grafana-visualization-example-01.png)
+
+
 
 <a name="changelog"></a>
 
