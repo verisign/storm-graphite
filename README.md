@@ -9,6 +9,7 @@ real-time graphing.
 
 Table of Contents
 
+* <a href="#Value">Value proposition</a>
 * <a href="#Background">Background</a>
 * <a href="#Usage">Usage</a>
 * <a href="#changelog">Change log</a>
@@ -29,6 +30,25 @@ Table of Contents
 ![Example Graphite UI](images/Storm-Graphite-ScreenShot.png)
 
 ---
+
+<a name="Value"></a>
+
+# Value proposition
+
+Why should you be interested in storm-graphite or in Storm's metrics in general?
+
+The metrics reported by Storm provide you with many insights into how your Storm clusters and your Storm topologies are
+performing.  Sending these metrics to a monitoring tool such as Graphite allows you to visualize this telemetry data,
+to create operational dashboards, and to performance-tune and troubleshoot your Storm infrastructure as well your Storm
+applications.
+
+For example, the following questions can be answered by Storm's metrics:
+
+* Identify latency bottlenecks: Which spouts or bolts cause the largest processing delay in your data pipeline?
+* Troubleshoot Java woes: Which topologies suffer the most from long garbage collection runs?
+* Optimize hardware or Storm configuration: Which topologies are running out of memory, and when?
+
+
 <a name="Background"></a>
 
 # Background
