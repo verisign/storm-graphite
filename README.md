@@ -1,6 +1,6 @@
 # storm-graphite
 
-Example implementation of a custom Storm `IMetricsConsumer`
+Example implementation of a custom [Apache Storm](https://storm.apache.org/) `IMetricsConsumer`
 ([source](https://github.com/apache/storm/blob/master/storm-core/src/jvm/backtype/storm/metric/api/IMetricsConsumer.java))
 that forwards Storm's built-in metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server for
 real-time graphing.
@@ -33,7 +33,7 @@ Table of Contents
 
 # Background
 
-Storm versions 0.9+ support a built-in [metrics framework](https://storm.apache.org/documentation/Metrics.html)
+[Apache Storm](https://storm.apache.org/) versions 0.9+ support a built-in [metrics framework](https://storm.apache.org/documentation/Metrics.html)
  for collecting and reporting metrics to external systems.  Storm ships with a
 [LoggingMetricsConsumer](https://github.com/apache/storm/blob/master/storm-core/src/jvm/backtype/storm/metric/LoggingMetricsConsumer.java)
 that can log these metrics to file.
@@ -55,7 +55,7 @@ The end result of this workflow is a storm-graphite jar file in the `lib/` folde
 
 ## Building and packaging
 
-Your development machine requires a Java JDK.  The code works with both Java 6 and Java 7.
+Your development machine requires a Java JDK. The code works with both Java 6 and Java 7.
 
 
 ### Run the build
