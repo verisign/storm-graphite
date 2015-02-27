@@ -1,4 +1,4 @@
-# storm-graphite
+# storm-graphite [![Build Status](https://travis-ci.org/verisign/storm-graphite.svg?branch=master)](https://travis-ci.org/verisign/storm-graphite)
 
 Example implementation of a custom [Apache Storm](https://storm.apache.org/) `IMetricsConsumer`
 ([source](https://github.com/apache/storm/blob/master/storm-core/src/jvm/backtype/storm/metric/api/IMetricsConsumer.java))
