@@ -7,6 +7,8 @@ buildscript {
     classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
     classpath 'com.kenshoo:gradle-fpm:0.4'
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
+    // https://github.com/kt3k/coveralls-gradle-plugin
+    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.3.1'
   }
 }
 
@@ -17,6 +19,7 @@ description = "An IMetricsConsumer that forwards Storm's built-in metrics to a G
 
 apply plugin: 'java'
 apply plugin: 'cobertura'
+apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'maven'
 apply plugin: 'fpm-packaging'
 apply plugin: 'idea'
@@ -96,7 +99,7 @@ test {
 // https://github.com/stevesaliman/gradle-cobertura-plugin
 // http://ingorichter.blogspot.ch/2013/03/using-cobertura-with-gradle.html for list of options
 cobertura {
-  coverageFormats = ['xml', 'html']
+  coverageFormats = ['xml', 'html'] // coveralls plugin depends on xml format report
 }
 
 task createWrapper(type: Wrapper) {
