@@ -6,5 +6,8 @@ env:
 jdk:
   - oraclejdk7
 
+script:
+  - ./gradlew test
+
 after_success:
   - ./gradlew cobertura coveralls
