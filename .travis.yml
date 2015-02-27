@@ -1,0 +1,8 @@
+language: java
+
+env:
+  - TERM=dumb # Gradle should use plain console output
+
+jdk:
+  - openjdk7
+  - oraclejdk7
