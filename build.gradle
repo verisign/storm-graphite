@@ -31,7 +31,7 @@ ext {
   rpmVersion = System.getenv("VERSION") ?: "${project.version}"
   buildNumber = System.getenv("BUILD_NUMBER") ?: "1.verisign"
   rpmMaintainer = System.getenv("MAINTAINER") ?: "change.this@email.com"
-  metricsVersion = '3.0.1'
+  metricsVersion = '3.1.0'
 }
 
 sourceCompatibility = jdkVersion
@@ -40,6 +40,7 @@ targetCompatibility = jdkVersion
 repositories {
   mavenCentral()
   maven { url 'https://clojars.org/repo' }
+  maven { url "http://central.maven.org/maven2" }
 }
 
 dependencies {
@@ -47,8 +48,8 @@ dependencies {
   compile(
     ['org.apache.storm:storm-core:0.9.3'],
     ['com.google.guava:guava:17.0'],
-    ["com.codahale.metrics:metrics-core:${metricsVersion}"],
-    ["com.codahale.metrics:metrics-graphite:${metricsVersion}"],
+    ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
+    ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
   )
 
   testCompile(
@@ -124,8 +125,8 @@ packaging {
 
 shadowJar {
   dependencies {
-    include(dependency("com.codahale.metrics:metrics-core:${metricsVersion}"))
-    include(dependency("com.codahale.metrics:metrics-graphite:${metricsVersion}"))
+    include(dependency("io.dropwizard.metrics:metrics-core:${metricsVersion}"))
+    include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
   }
 }
 tasks.rpm.dependsOn shadowJar

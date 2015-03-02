@@ -87,7 +87,7 @@ public class GraphiteAdapterTest {
     // Given a tuple representing a (metricPath, value, timestamp) metric (injected via data provider)
 
     // When the adapter sends the metric
-    testAdapter.send(metricPath, value, timestamp);
+    testAdapter.appendToSendBuffer(metricPath, value, timestamp);
 
     // Then the server should receive a properly formatted string representing the metric
     ByteBuffer receive = ByteBuffer.allocate(1024);

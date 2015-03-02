@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -114,7 +116,14 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
     for (DataPoint dataPoint : dataPoints) {
-      // Most data points have Map as a value.
+      // Messaging layer queues and connection states need to be handled differently as they are more structured
+      // than raw numbers.
+      if (dataPoint.name.equalsIgnoreCase("__send-iconnection") ||
+          dataPoint.name.equalsIgnoreCase("__recv-iconnection")) {
+        continue;
+      }
+      
+      // Most data points contain a Map as a value.
       if (dataPoint.value instanceof Map) {
         Map<String, Object> m = (Map<String, Object>) dataPoint.value;
         if (!m.isEmpty()) {
@@ -130,11 +139,12 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       else {
         String value = GraphiteCodec.format(dataPoint.value);
         String metricPath = constructMetricName(taskInfo, dataPoint).concat(".").concat("value");
-        String prefixedMetricPath = graphitePrefix.isEmpty() ? metricPath :
+        String prefixedMetricPath = graphitePrefix.isEmpty() ? metricPath : 
             graphitePrefix.concat(".").concat(metricPath);
         sendToGraphite(prefixedMetricPath, value, taskInfo.timestamp);
       }
     }
+    flush();
     graphiteDisconnect();
   }
 
@@ -162,9 +172,15 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   }
 
   protected void sendToGraphite(String metricPath, String value, long timestamp) {
+    if (graphite != null ) {
+      graphite.appendToSendBuffer(metricPath, value, timestamp);
+    }
+  }
+
+  protected void flush() {
     try {
       if (graphite != null) {
-        graphite.send(metricPath, value, timestamp);
+        graphite.flushSendBuffer();
       }
     }
     catch (IOException e) {
