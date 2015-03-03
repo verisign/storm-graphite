@@ -29,7 +29,7 @@ ext {
   jdkVersion = '1.7'
   rpmVersion = System.getenv("VERSION") ?: "${project.version}"
   buildNumber = System.getenv("BUILD_NUMBER") ?: "1.verisign"
-  rpmMaintainer = System.getenv("MAINTAINER") ?: "kmao@verisign.com"
+  rpmMaintainer = System.getenv("MAINTAINER") ?: "change.this@email.com"
   metricsVersion = '3.1.0'
 }
 
@@ -127,14 +127,15 @@ buildRpm {
 }
 buildRpm.dependsOn(jar)
 
-task buildFatJarRpm(type: Rpm) {
+task buildUberJarRpm(type: Rpm) {
+  packageName = "${project.name}_uber"
   into '/opt/storm'
 
   from(shadowJar.outputs.files) {
     into 'lib'
   }
 }
-buildFatJarRpm.dependsOn(shadowJar)
+buildUberJarRpm.dependsOn(shadowJar)
 
 shadowJar {
   dependencies {

@@ -88,9 +88,9 @@ Your development machine requires a Java JDK. The code works with both Java 6 an
     $ ./gradlew clean build
 
     >>> build/libs/ (artifacts)
-          storm-graphite-0.1.2-SNAPSHOT-javadoc.jar
-          storm-graphite-0.1.2-SNAPSHOT-sources.jar
-          storm-graphite-0.1.2-SNAPSHOT.jar
+          storm-graphite-0.1.4-SNAPSHOT-javadoc.jar
+          storm-graphite-0.1.4-SNAPSHOT-sources.jar
+          storm-graphite-0.1.4-SNAPSHOT.jar
     >>> build/docs/javadoc/index.html (javadocs)
     >>> build/reports/tests/index.html (test results)
 
@@ -117,24 +117,28 @@ Analyze code coverage:
 
 ### Package the jar as RPM
 
-Note:  [fpm](https://github.com/jordansissel/fpm) must be installed and available.
+    $ ./gradlew clean build buildRpm
 
-    $ ./gradlew clean build rpm
+    >>> Generates build/distributions/storm-graphite-0.1.4_SNAPSHOT-1.verisign.noarch.rpm
+    
+To package the uber-jar, containing all of the necessary dependencies:
 
-    >>> Generates build/linux-package/storm-graphite-0.1.0_SNAPSHOT-1.verisign.noarch.rpm
+	$./gradlew clean build buildUberJarRpm
+	
+	>>> Generates build/distributions/storm-graphite_uber-0.1.4_SNAPSHOT-1.verisign.noarch.rpm     
 
 You can also provide the optional environment variables `VERSION` (sets the RPM "version"; default: same as the
 code's `project.version` in [build.gradle](build.gradle)), `BUILD_NUMBER` (sets the RPM "iteration"; default:
 "1.verisign") and `MAINTAINER` (sets the RPM "maintainer"; default: "change.this@email.com").
 
-    $ VERSION=2.0.0 BUILD_NUMBER=3.yourcompany ./gradlew clean jar rpm
+    $ VERSION=2.0.0 BUILD_NUMBER=3.yourcompany ./gradlew clean jar buildRpm
 
-    >>> Generates build/linux-package/storm-graphite-2.0.0-3.yourcompany.noarch.rpm
+    >>> Generates build/distributions/storm-graphite-2.0.0-3.yourcompany.noarch.rpm
 
 The two environment variables `VERSION` and `BUILD_NUMBER` influence the generated RPM file _but do not modify the_
-_packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set to `0.1.0-SNAPSHOT` and you provide
+_packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set to `0.1.0_SNAPSHOT` and you provide
 `VERSION=2.0` when creating the RPM, then the generated RPM will have a version of 2.0 although the embedded
-storm-graphite jar file will have the version `0.1.0-SNAPSHOT` (and will be named accordingly).
+storm-graphite jar file will have the version `0.1.0_SNAPSHOT` (and will be named accordingly).
 
 
 ### IDE support
