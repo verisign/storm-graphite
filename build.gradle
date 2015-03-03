@@ -5,32 +5,31 @@ buildscript {
   }
   dependencies {
     classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
-    classpath 'com.kenshoo:gradle-fpm:0.4'
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
     // https://github.com/kt3k/coveralls-gradle-plugin
     classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.3.1'
+    classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.0'
   }
 }
 
 group = 'com.verisign.storm.metrics'
-version = '0.1.4-SNAPSHOT'
-
+version = '0.1.4_SNAPSHOT'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
 apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'maven'
-apply plugin: 'fpm-packaging'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'os-package'
 
 ext {
   jdkVersion = '1.7'
   rpmVersion = System.getenv("VERSION") ?: "${project.version}"
   buildNumber = System.getenv("BUILD_NUMBER") ?: "1.verisign"
-  rpmMaintainer = System.getenv("MAINTAINER") ?: "change.this@email.com"
+  rpmMaintainer = System.getenv("MAINTAINER") ?: "kmao@verisign.com"
   metricsVersion = '3.1.0'
 }
 
@@ -45,37 +44,37 @@ repositories {
 dependencies {
 
   compile(
-    ['org.apache.storm:storm-core:0.9.3'],
-    ['com.google.guava:guava:17.0'],
-    ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
-    ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
+      ['org.apache.storm:storm-core:0.9.3'],
+      ['com.google.guava:guava:17.0'],
+      ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
+      ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
   )
 
   testCompile(
-    ['org.uncommons:reportng:1.1.4'],
-    ['org.mockito:mockito-all:1.9.5'],
-    ['org.easytesting:fest-assert-core:2.0M10'],
-    ['org.testng:testng:6.8.8'],
-    // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
-    // (Gradle will fail to run tests otherwise.)
-    ['com.google.inject:guice:3.0']
+      ['org.uncommons:reportng:1.1.4'],
+      ['org.mockito:mockito-all:1.9.5'],
+      ['org.easytesting:fest-assert-core:2.0M10'],
+      ['org.testng:testng:6.8.8'],
+      // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
+      // (Gradle will fail to run tests otherwise.)
+      ['com.google.inject:guice:3.0']
   )
 
 }
 
 task sourcesJar(type: Jar, dependsOn: 'classes') {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+  classifier = 'sources'
+  from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: 'javadoc') {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
+  classifier = 'javadoc'
+  from javadoc.destinationDir
 }
 
 artifacts {
-    archives sourcesJar
-    archives javadocJar
+  archives sourcesJar
+  archives javadocJar
 }
 
 test {
@@ -106,21 +105,36 @@ task createWrapper(type: Wrapper) {
   gradleVersion = '2.3'
 }
 
-packaging {
-  baseDir = "${project.buildDir}/libs/"
-  prefix = '/opt/storm/lib'
-  extraOptions = [
-    '--name': 'storm-graphite',
-    '--description': "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing.",
-    '--url': 'https://github.com/verisign/storm-graphite',
-    '--version': "${rpmVersion}",
-    '--iteration': "${buildNumber}",
-    '--maintainer': "${rpmMaintainer}",
-    '-a': 'all'
-  ]
-  filesArgs = ["${project.name}-${project.version}-all.jar"]
-  force = true
+ospackage {
+  packageName         project.name
+  version             rpmVersion
+  release             buildNumber
+  packageDescription  description
+  packager            rpmMaintainer
+  url                 "https://github.com/verisign/storm-graphite"
+  type                BINARY
+  arch                NOARCH
+  os                  LINUX
+  user                'root'
 }
+
+buildRpm {
+  into '/opt/storm'
+
+  from(jar.outputs.files) {
+    into 'lib'
+  }
+}
+buildRpm.dependsOn(jar)
+
+task buildFatJarRpm(type: Rpm) {
+  into '/opt/storm'
+
+  from(shadowJar.outputs.files) {
+    into 'lib'
+  }
+}
+buildFatJarRpm.dependsOn(shadowJar)
 
 shadowJar {
   dependencies {
@@ -128,5 +142,3 @@ shadowJar {
     include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
   }
 }
-tasks.rpm.dependsOn shadowJar
-tasks.debian.dependsOn shadowJar
