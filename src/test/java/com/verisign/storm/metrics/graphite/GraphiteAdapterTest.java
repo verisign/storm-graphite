@@ -81,13 +81,14 @@ public class GraphiteAdapterTest {
             "test.storm.metric3 3.14 1408393534971\n" } };
   }
 
-  @Test(dataProvider = "metricsProvider")
+  @Test(dataProvider = "metrics")
   public void sendMetricTupleAsFormattedStringToGraphiteServer(String metricPath, String value, long timestamp,
       String expectedMessageReceived) throws IOException {
     // Given a tuple representing a (metricPath, value, timestamp) metric (injected via data provider)
 
     // When the adapter sends the metric
     testAdapter.appendToSendBuffer(metricPath, value, timestamp);
+    testAdapter.flushSendBuffer();
 
     // Then the server should receive a properly formatted string representing the metric
     ByteBuffer receive = ByteBuffer.allocate(1024);
