@@ -116,8 +116,10 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
     for (DataPoint dataPoint : dataPoints) {
-      // Messaging layer queues and connection states need to be handled differently as they are more structured
-      // than raw numbers.
+      // TODO: Correctly process metrics of the messaging layer queues and connection states.
+      // These metrics need to be handled differently as they are more structured than raw numbers.
+      // For the moment we ignore these metrics and track this task at
+      // https://github.com/verisign/storm-graphite/issues/2.
       if (dataPoint.name.equalsIgnoreCase("__send-iconnection") ||
           dataPoint.name.equalsIgnoreCase("__recv-iconnection")) {
         continue;
