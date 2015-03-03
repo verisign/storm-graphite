@@ -40,7 +40,6 @@ targetCompatibility = jdkVersion
 repositories {
   mavenCentral()
   maven { url 'https://clojars.org/repo' }
-  maven { url "http://central.maven.org/maven2" }
 }
 
 dependencies {
