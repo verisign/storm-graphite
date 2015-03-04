@@ -120,12 +120,12 @@ Analyze code coverage:
     $ ./gradlew clean build buildRpm
 
     >>> Generates build/distributions/storm-graphite-0.1.4_SNAPSHOT-1.verisign.noarch.rpm
-    
+
 To package the uber-jar, containing all of the necessary dependencies:
 
-	$./gradlew clean build buildUberJarRpm
-	
-	>>> Generates build/distributions/storm-graphite_uber-0.1.4_SNAPSHOT-1.verisign.noarch.rpm     
+    $ ./gradlew clean build buildUberJarRpm
+
+    >>> Generates build/distributions/storm-graphite_uber-0.1.4_SNAPSHOT-1.verisign.noarch.rpm
 
 You can also provide the optional environment variables `VERSION` (sets the RPM "version"; default: same as the
 code's `project.version` in [build.gradle](build.gradle)), `BUILD_NUMBER` (sets the RPM "iteration"; default:
