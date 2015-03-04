@@ -124,7 +124,7 @@ your applications use a different version of Metrics.
 
 Create the RPM:
 
-    $ ./gradlew clean build buildUberJarRpm
+    $ ./gradlew clean build rpm
 
 The output will depend on whether the version is a release or a snapshot:
 
@@ -163,7 +163,7 @@ You can also provide the following optional environment variables:
 
 Example:
 
-    $ VERSION=2.0.0 RPM_RELEASE=3.yourcompany ./gradlew clean build buildUberJarRpm
+    $ VERSION=2.0.0 RPM_RELEASE=3.yourcompany ./gradlew clean build rpm
 
     >>> Generates build/distributions/storm-graphite-2.0.0-3.yourcompany.noarch.rpm
 

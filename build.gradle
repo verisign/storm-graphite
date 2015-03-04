@@ -160,7 +160,8 @@ buildRpm {
 }
 buildRpm.dependsOn(jar)
 
-task buildUberJarRpm(type: Rpm) {
+// Creates an RPM that packages an uber jar.
+task rpm(type: Rpm) {
   packageName = "${project.name}"
   into '/opt/storm'
 
@@ -168,7 +169,7 @@ task buildUberJarRpm(type: Rpm) {
     into 'lib'
   }
 }
-buildUberJarRpm.dependsOn(shadowJar)
+rpm.dependsOn(shadowJar)
 
 shadowJar {
 
