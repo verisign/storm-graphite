@@ -25,12 +25,30 @@ apply plugin: 'eclipse'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'os-package'
 
+// Helper functions for RPM metadata
+def shortCommit = "git rev-parse --short HEAD".execute().in.text.trim()
+def buildTime() {
+  def df = new java.text.SimpleDateFormat('yyyyMMdd')
+  df.setTimeZone(TimeZone.getTimeZone('UTC'))
+  return df.format(new Date())
+}
+
 ext {
   jdkVersion = '1.7'
-  rpmVersion = System.getenv("VERSION") ?: "${project.version}"
-  buildNumber = System.getenv("BUILD_NUMBER") ?: "1.verisign"
-  rpmMaintainer = System.getenv("MAINTAINER") ?: "change.this@email.com"
   metricsVersion = '3.1.0'
+
+  // RPM metadata
+  rpmMaintainer = System.getenv('MAINTAINER') ?: 'change.this@email.com'
+  rpmVersion = System.getenv('VERSION') ?: "${project.version}"
+  rpmRelease = '1'
+  if (rpmVersion.endsWith('_SNAPSHOT')) {
+    defaultBuildNumber = '1'
+    releaseNumberIncrement = System.getenv('BUILD_NUMBER') ?: "${defaultBuildNumber}"
+    snapshotReleaseTag = "0.${releaseNumberIncrement}.${buildTime()}git${shortCommit}"
+    rpmVersion = rpmVersion.replace('_SNAPSHOT', '')
+    rpmRelease = snapshotReleaseTag
+  }
+
 }
 
 sourceCompatibility = jdkVersion
@@ -108,7 +126,7 @@ task createWrapper(type: Wrapper) {
 ospackage {
   packageName         project.name
   version             rpmVersion
-  release             buildNumber
+  release             rpmRelease
   packageDescription  description
   packager            rpmMaintainer
   url                 "https://github.com/verisign/storm-graphite"
