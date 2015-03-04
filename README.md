@@ -89,6 +89,7 @@ is against Java 7.
     $ ./gradlew clean build
 
     >>> build/libs/ (artifacts)
+          storm-graphite-0.1.4-SNAPSHOT-all.jar
           storm-graphite-0.1.4-SNAPSHOT-javadoc.jar
           storm-graphite-0.1.4-SNAPSHOT-sources.jar
           storm-graphite-0.1.4-SNAPSHOT.jar
