@@ -129,11 +129,13 @@ ospackage {
   release             rpmRelease
   packageDescription  description
   packager            rpmMaintainer
-  url                 "https://github.com/verisign/storm-graphite"
+  url                 'https://github.com/verisign/storm-graphite'
   type                BINARY
   arch                NOARCH
   os                  LINUX
   user                'root'
+  vendor              'Verisign'
+  license             'Apache License, Version 2.0'
 }
 
 buildRpm {
