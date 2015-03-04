@@ -222,6 +222,7 @@ topology.metrics.consumer.register:
       metrics.graphite.host: "graphite.example.com"
       metrics.graphite.port: "2003"
       metrics.graphite.prefix: "storm.test"
+      metrics.graphite.min-connect-attempt-interval-secs: "5"
 ```
 
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
@@ -246,6 +247,7 @@ storm::config_map:
         metrics.graphite.host: "graphite.example.com"
         metrics.graphite.port: "2003"
         metrics.graphite.prefix: "storm.test"
+        metrics.graphite.min-connect-attempt-interval-secs: "5"
 ```
 
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.

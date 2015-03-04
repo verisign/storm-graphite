@@ -42,6 +42,8 @@ import java.util.Map;
  *   conf.put("metrics.graphite.host", "<GRAPHITE HOSTNAME>");
  *   conf.put("metrics.graphite.port", "<GRAPHITE PORT>");
  *   conf.put("metrics.graphite.prefix", "<DOT DELIMITED PREFIX>");
+ *   // Optional settings
+ *   conf.put("metrics.graphite.min-connect-attempt-interval-secs", "5");
  * }
  * </pre>
  *
@@ -55,6 +57,7 @@ import java.util.Map;
  *   metrics.graphite.host: "<GRAPHITE HOSTNAME>"
  *   metrics.graphite.port: "<GRAPHITE PORT>"
  *   metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
+ *   metrics.graphite.min-connect-attempt-interval-secs: "5"
  * }
  * </pre>
  */
@@ -63,11 +66,14 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   private static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
   private static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
   private static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
+  private static final String GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION =
+      "metrics.graphite.min-connect-attempt-interval-secs";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
 
   private String graphiteHost;
   private int graphitePort;
   private String graphitePrefix;
+  private int graphiteMinConnectAttemptIntervalSecs;
   private String stormId;
   private GraphiteAdapter graphite;
 
@@ -109,6 +115,11 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
     if (conf.containsKey(GRAPHITE_PREFIX_OPTION)) {
       graphitePrefix = (String) conf.get(GRAPHITE_PREFIX_OPTION);
+    }
+
+    if (conf.containsKey(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION)) {
+      graphiteMinConnectAttemptIntervalSecs =
+          Integer.parseInt((String) conf.get(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION));
     }
   }
 
@@ -163,7 +174,8 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   }
 
   protected void graphiteConnect() {
-    graphite = new GraphiteAdapter(new InetSocketAddress(graphiteHost, graphitePort));
+    graphite = new GraphiteAdapter(new InetSocketAddress(graphiteHost, graphitePort),
+        graphiteMinConnectAttemptIntervalSecs);
     try {
       graphite.connect();
     }

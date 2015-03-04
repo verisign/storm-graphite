@@ -29,13 +29,19 @@ import java.net.InetSocketAddress;
 public class GraphiteAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteAdapter.class);
-  private static final long MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
+  private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
   private final InetSocketAddress server;
+  private final int minConnectAttemptIntervalSecs;
   private final Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
   public GraphiteAdapter(InetSocketAddress server) {
+    this(server, DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS);
+  }
+
+  public GraphiteAdapter(InetSocketAddress server, int minConnectAttemptIntervalSecs) {
     this.server = server;
+    this.minConnectAttemptIntervalSecs = minConnectAttemptIntervalSecs;
     this.graphite = new Graphite(server);
     lastConnectAttemptTimestampMs = 0;
   }
@@ -117,7 +123,7 @@ public class GraphiteAdapter {
 
   private boolean reconnectingAllowed(long timestampMs) {
     long secondsSinceLastConnectAttempt = (timestampMs - lastConnectAttemptTimestampMs) / 1000;
-    return secondsSinceLastConnectAttempt > MIN_CONNECT_ATTEMPT_INTERVAL_SECS;
+    return secondsSinceLastConnectAttempt > minConnectAttemptIntervalSecs;
   }
 
   public String serverFingerprint() {
