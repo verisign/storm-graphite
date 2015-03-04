@@ -126,6 +126,10 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   @Override @SuppressWarnings("unchecked")
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
+    
+    String metricPrefix = graphitePrefix.isEmpty() ?
+        constructMetricName(taskInfo) : graphitePrefix.concat(".").concat(constructMetricName(taskInfo));
+
     for (DataPoint dataPoint : dataPoints) {
       // TODO: Correctly process metrics of the messaging layer queues and connection states.
       // These metrics need to be handled differently as they are more structured than raw numbers.
@@ -142,19 +146,15 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         if (!m.isEmpty()) {
           for (String key : m.keySet()) {
             String value = GraphiteCodec.format(m.get(key));
-            String metricPath = constructMetricName(taskInfo, dataPoint).concat(".").concat(key);
-            String prefixedMetricPath = graphitePrefix.isEmpty() ? metricPath :
-                graphitePrefix.concat(".").concat(metricPath);
-            sendToGraphite(prefixedMetricPath, value, taskInfo.timestamp);
+            String metricPath = metricPrefix.concat(dataPoint.name).concat(".").concat(key);
+            sendToGraphite(metricPath, value, taskInfo.timestamp);
           }
         }
       }
       else {
         String value = GraphiteCodec.format(dataPoint.value);
-        String metricPath = constructMetricName(taskInfo, dataPoint).concat(".").concat("value");
-        String prefixedMetricPath = graphitePrefix.isEmpty() ? metricPath : 
-            graphitePrefix.concat(".").concat(metricPath);
-        sendToGraphite(prefixedMetricPath, value, taskInfo.timestamp);
+        String metricPath = metricPrefix.concat(".").concat(dataPoint.name).concat(".value");
+        sendToGraphite(metricPath, value, taskInfo.timestamp);
       }
     }
     flush();
@@ -165,13 +165,20 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
    * Construct a fully qualified name to assign to a particular metric described by dataPoint.
    *
    * @param taskInfo  The information regarding the context in which the data point is supplied
-   * @param dataPoint The data point (name, value) to assign a name to
    *
    * @return A fully qualified metric name assigned to data point
    */
-  private String constructMetricName(TaskInfo taskInfo, DataPoint dataPoint) {
+  private String constructMetricName(TaskInfo taskInfo) {
+    StringBuilder sb = new StringBuilder();
+    
+    // Removing nonce appended to topology name (e.g. "Example-Topology-1-2345" -> "Example-Topology")
     String simpleStormId = stormId.substring(0, stormId.substring(0, stormId.lastIndexOf("-")).lastIndexOf("-"));
-    return simpleStormId.concat(".").concat(taskInfo.srcComponentId).concat(".").concat(dataPoint.name);
+    sb.append(simpleStormId).append(".");
+    sb.append(taskInfo.srcComponentId).append(".");
+    sb.append(taskInfo.srcWorkerHost).append(".");
+    sb.append(taskInfo.srcWorkerPort).append(".");
+
+    return sb.toString();
   }
 
   protected void graphiteConnect() {

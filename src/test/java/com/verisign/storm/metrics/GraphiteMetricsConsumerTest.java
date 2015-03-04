@@ -14,6 +14,7 @@
  */
 package com.verisign.storm.metrics;
 
+import backtype.storm.metric.api.IMetricsConsumer;
 import backtype.storm.metric.api.IMetricsConsumer.DataPoint;
 import backtype.storm.metric.api.IMetricsConsumer.TaskInfo;
 import backtype.storm.task.IErrorReporter;
@@ -32,21 +33,35 @@ import static org.mockito.Mockito.*;
 public class GraphiteMetricsConsumerTest {
 
   private final Long currentTime = System.currentTimeMillis();
-  private final TaskInfo taskInfo = new TaskInfo("testSrcWorkerHost", 1337, "testStormComponentID", 3008, currentTime,
-      10);
-  private final GraphiteMetricsConsumer consumer = new GraphiteMetricsConsumer();
   private final Random rng = new Random(currentTime);
+
+  private String testStormComponentID = "testStormComponentID";
+  private String testStormSrcWorkerHost = "testSrcWorkerHost";
+  private Integer testStormSrcWorkerPort = 6700;
+  private Integer testStormSrcTaskId = 3008;
+  
+  private String testTopologyName = "Example-Storm-Topology-Name-13-1425495763";
+  private String testSimpleTopologyName = "Example-Storm-Topology-Name";
+  private String testGraphiteHost = "127.0.0.1";
+  private String testGraphitePort = "2003";
+  private String testPrefix = "unittest";
+
+  private final GraphiteMetricsConsumer consumer = new GraphiteMetricsConsumer();
+  private final TaskInfo taskInfo = new TaskInfo(testStormSrcWorkerHost, testStormSrcWorkerPort, testStormComponentID, 
+      testStormSrcTaskId, currentTime, 10);
 
   @Test
   public void shouldReadConfigAndContext() {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
-    stormConfig.put("metrics.graphite.host", "127.0.0.1");
+    stormConfig.put("metrics.graphite.host", testGraphiteHost);
+    
     Map<String, String> registrationArgument = Maps.newHashMap();
-    registrationArgument.put("metrics.graphite.port", "2003");
-    registrationArgument.put("metrics.graphite.prefix", "unittest");
+    registrationArgument.put("metrics.graphite.port", testGraphitePort);
+    registrationArgument.put("metrics.graphite.prefix", testPrefix);
+    
     TopologyContext topologyContext = mock(TopologyContext.class);
-    when(topologyContext.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
+    when(topologyContext.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
 
     // When the Graphite reporter initializes
@@ -54,10 +69,10 @@ public class GraphiteMetricsConsumerTest {
 
     // Then the reporter should point at the right Graphite server with the proper configuration
     verify(topologyContext).getStormId();
-    assertThat(consumer.getGraphiteHost()).isEqualTo("127.0.0.1");
-    assertThat(consumer.getGraphitePort()).isEqualTo(2003);
-    assertThat(consumer.getGraphitePrefix()).isEqualTo("unittest");
-    assertThat(consumer.getStormId()).isEqualTo("Example-Storm-Topology-Name-13-1425495763");
+    assertThat(consumer.getGraphiteHost()).isEqualTo(testGraphiteHost);
+    assertThat(consumer.getGraphitePort()).isEqualTo(Integer.parseInt(testGraphitePort));
+    assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
+    assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
   }
 
   @DataProvider(name = "generateDataPointsInt")
@@ -77,16 +92,17 @@ public class GraphiteMetricsConsumerTest {
     // Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
     Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", "fakeHostname", "metrics.graphite.port", "12345", "metrics.graphite.prefix",
-            "unittest");
+        .of("metrics.graphite.host", testStormSrcWorkerHost,
+            "metrics.graphite.port", testStormSrcWorkerPort.toString(),
+            "metrics.graphite.prefix", testPrefix);
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
+    when(context.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
+    
     // and a collection of data points containing Integer data (already injected via data provider)
-
     // When the reporter processes each data point
     consumer.handleDataPoints(taskInfo, dataPoints);
 
@@ -94,12 +110,22 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = getExpectedMetricPath(dp, key);
         String expValue = datamap.get(key).toString();
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
       }
     }
+  }
+
+  private String getExpectedMetricPath(DataPoint dp, String key) {
+    return testPrefix + "." +
+              testSimpleTopologyName + "." +
+              testStormComponentID + "." +
+              testStormSrcWorkerHost + "." +
+              testStormSrcWorkerPort + "." +
+              dp.name + "." +
+              key;
   }
 
   @DataProvider(name = "generateDataPointsLong")
@@ -117,17 +143,20 @@ public class GraphiteMetricsConsumerTest {
   public void shouldReadDataAndSendLong(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
+    
     Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", "fakeHostname", "metrics.graphite.port", "12345", "metrics.graphite.prefix",
-            "unittest");
+        .of("metrics.graphite.host", testStormSrcWorkerHost,
+            "metrics.graphite.port", testStormSrcWorkerPort.toString(),
+            "metrics.graphite.prefix", testPrefix);
     Object obj = mock(Object.class);
+    
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
+    when(context.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
-    // and a collection of data points containing Integer data (already injected via data provider)
 
+    // and a collection of data points containing Integer data (already injected via data provider)
     // When the reporter processes each data point
     consumer.handleDataPoints(taskInfo, dataPoints);
 
@@ -135,7 +164,7 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = getExpectedMetricPath(dp, key);
         String expValue = datamap.get(key).toString();
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
@@ -158,17 +187,20 @@ public class GraphiteMetricsConsumerTest {
   public void shouldReadDataAndSendFloat(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
+    
     Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", "fakeHostname", "metrics.graphite.port", "12345", "metrics.graphite.prefix",
-            "unittest");
+        .of("metrics.graphite.host", testStormSrcWorkerHost,
+            "metrics.graphite.port", testStormSrcWorkerPort.toString(),
+            "metrics.graphite.prefix", testPrefix);
     Object obj = mock(Object.class);
+    
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
+    when(context.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
-    // and a collection of data points containing Integer data (already injected via data provider)
 
+    // and a collection of data points containing Integer data (already injected via data provider)
     // When the reporter processes each data point
     consumer.handleDataPoints(taskInfo, dataPoints);
 
@@ -176,7 +208,8 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = getExpectedMetricPath(dp, key);
+
         String expValue = String.format("%.2f", datamap.get(key));
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
@@ -199,18 +232,20 @@ public class GraphiteMetricsConsumerTest {
   public void shouldReadDataAndSendDouble(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
+    
     Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", "fakeHostname", "metrics.graphite.port", "12345", "metrics.graphite.prefix",
-            "unittest");
+        .of("metrics.graphite.host", testStormSrcWorkerHost,
+            "metrics.graphite.port", testStormSrcWorkerPort.toString(),
+            "metrics.graphite.prefix", testPrefix);
+    
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
+    when(context.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
 
     // and a collection of data points containing Integer data (already injected via data provider)
-
     // When the reporter processes each data point
     consumer.handleDataPoints(taskInfo, dataPoints);
 
@@ -218,9 +253,10 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = getExpectedMetricPath(dp, key);
         String expValue = String.format("%.2f", datamap.get(key));
         long expTimestamp = taskInfo.timestamp;
+        
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
       }
     }
