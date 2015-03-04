@@ -127,6 +127,7 @@ ospackage {
   packageName         project.name
   version             rpmVersion
   release             rpmRelease
+  summary             description
   packageDescription  description
   packageGroup        'Development/Tools'
   packager            rpmMaintainer
