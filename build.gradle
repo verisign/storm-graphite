@@ -39,9 +39,19 @@ ext {
 
   // RPM metadata
   rpmMaintainer = System.getenv('MAINTAINER') ?: 'change.this@email.com'
+
   rpmVersion = System.getenv('VERSION') ?: "${project.version}"
+  isSnapshot = rpmVersion.endsWith('-SNAPSHOT') ? true : false
+  if (isSnapshot) {
+    rpmVersion = rpmVersion.replace('-SNAPSHOT', '')
+  }
+
   rpmRelease = '1'
-  if (rpmVersion.endsWith('-SNAPSHOT')) {
+  overriddenRpmRelease = System.getenv('RPM_RELEASE')
+  if (overriddenRpmRelease != null) {
+    rpmRelease = overriddenRpmRelease
+  }
+  else if (isSnapshot) {
     defaultBuildNumber = '1'
     releaseNumberIncrement = System.getenv('BUILD_NUMBER') ?: "${defaultBuildNumber}"
     snapshotReleaseTag = "0.${releaseNumberIncrement}.${buildTime()}git${shortCommit}"
