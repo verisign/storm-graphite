@@ -1,3 +1,10 @@
+# 0.1.4 (March 04, 2015)
+
+IMPROVEMENTS
+
+* Follow Fedora packaging guidelines for the RPMs we generate.
+
+
 # 0.1.3 (March 03, 2015)
 
 BUG FIXES
