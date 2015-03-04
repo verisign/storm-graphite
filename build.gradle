@@ -138,8 +138,13 @@ task buildUberJarRpm(type: Rpm) {
 buildUberJarRpm.dependsOn(shadowJar)
 
 shadowJar {
+
+  // Relocate Metrics library to prevent conflicts with user code that depends on Metrics, too.
+  relocate('com.codahale.metrics', 'com.verisign.storm-graphite.com.codahale.metrics')
+
   dependencies {
     include(dependency("io.dropwizard.metrics:metrics-core:${metricsVersion}"))
     include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
   }
+
 }
