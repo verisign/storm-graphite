@@ -12,6 +12,11 @@ Table of Contents
 * <a href="#Value">Value proposition</a>
 * <a href="#Background">Background</a>
 * <a href="#Usage">Usage</a>
+    * <a href="#usage-overview">Overview</a>
+    * <a href="#supported-storm-versions">Supported Storm versions</a>
+    * <a href="#building-packaging">Building and packaging</a>
+    * <a href="#storm-integration">Storm integration</a>
+    * <a href="#graphite-configuration">Configuring Graphite/Grafana</a>
 * <a href="#changelog">Change log</a>
 * <a href="#Contributing">Contributing</a>
 * <a href="#Authors">Authors</a>
@@ -72,17 +77,24 @@ metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server
 
 # Usage
 
+
+<a name="usage-overview"></a>
+
 ## Overview
 
 You must build and package storm-graphite, and then deploy the package to the machines in your Storm cluster.
 The end result of this workflow is a storm-graphite jar file in the `lib/` folder of the Storm installation directory.
 
 
+<a name="supported-storm-versions"></a>
+
 ## Supported Storm versions
 
 * Storm 0.9.x
 * Storm 0.10.0 (not yet released by Apache Storm project)
 
+
+<a name="building-packaging"></a>
 
 ## Building and packaging
 
@@ -196,6 +208,8 @@ $ ./gradlew cleanEclipse eclipse
 ```
 
 
+<a name="storm-integration"></a>
+
 ## Storm integration
 
 
@@ -261,7 +275,9 @@ storm::config_map:
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
 
 
-#### Configuring Graphite/Grafana
+<a name="graphite-configuration"></a>
+
+## Configuring Graphite/Grafana
 
 Assuming that you have a working Graphite or Grafana instance up and running, you can create queries such as the
 following to visualize your Storm metrics.  The example below is a Graphite query to construct the "Storm topologies:
