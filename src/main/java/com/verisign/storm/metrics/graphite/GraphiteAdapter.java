@@ -40,6 +40,9 @@ public class GraphiteAdapter {
   }
 
   public GraphiteAdapter(InetSocketAddress server, int minConnectAttemptIntervalSecs) {
+    if (server == null) {
+      throw new IllegalArgumentException("server address must not be null");
+    }
     this.server = server;
     this.minConnectAttemptIntervalSecs = minConnectAttemptIntervalSecs;
     this.graphite = new Graphite(server);

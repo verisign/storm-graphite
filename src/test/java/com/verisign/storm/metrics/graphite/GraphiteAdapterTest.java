@@ -97,4 +97,9 @@ public class GraphiteAdapterTest {
     assertThat(actualMessageReceived).isEqualTo(expectedMessageReceived);
   }
 
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void shouldThrowIAEWhenServerParameterIsNull() {
+    new GraphiteAdapter(null);
+  }
+
 }
