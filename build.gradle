@@ -139,6 +139,7 @@ ospackage {
 }
 
 buildRpm {
+  packageName = "${project.name}_slim"
   into '/opt/storm'
 
   from(jar.outputs.files) {
@@ -148,7 +149,7 @@ buildRpm {
 buildRpm.dependsOn(jar)
 
 task buildUberJarRpm(type: Rpm) {
-  packageName = "${project.name}_uber"
+  packageName = "${project.name}"
   into '/opt/storm'
 
   from(shadowJar.outputs.files) {
