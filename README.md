@@ -126,25 +126,51 @@ Create the RPM:
 
     $ ./gradlew clean build buildUberJarRpm
 
-    >>> Generates build/distributions/storm-graphite_uber-0.1.4_SNAPSHOT-1.verisign.noarch.rpm
+The output will depend on whether the version is a release or a snapshot:
+
+    # Releases (here: "0.1.4")
+    #
+    RPM: build/distributions/storm-graphite-0.1.4-1.noarch.rpm
+
+    $ rpm -qpi storm-graphite-0.1.4-1.noarch.rpm
+    Name        : storm-graphite               Relocations: (not relocatable)
+    Version     : 0.1.4                             Vendor: Verisign
+    Release     : 1
+
+
+    # Snapshots (here: "0.1.4-SNAPSHOT", built on Mar 04 2015 based on git commit 8ed273e)
+    #
+    RPM: build/distributions/storm-graphite-0.1.4-0.1.20150304git8ed273e.noarch.rpm
+
+    $ rpm -qpi
+    Name        : storm-graphite               Relocations: (not relocatable)
+    Version     : 0.1.4                             Vendor: Verisign
+    Release     : 0.1.20150304git8ed273e
+
 
 The default RPM settings will place the storm-graphite jar under `/opt/storm/lib/`:
 
-    # Example location
-    /opt/storm/lib/storm-graphite-0.1.4_SNAPSHOT-all.jar
+    # Example location (here: snapshot version)
+    /opt/storm/lib/storm-graphite-0.1.4-SNAPSHOT-all.jar
 
-You can also provide the optional environment variables `VERSION` (sets the RPM "version"; default: same as the
-code's `project.version` in [build.gradle](build.gradle)), `BUILD_NUMBER` (sets the RPM "iteration"; default:
-"1.verisign") and `MAINTAINER` (sets the RPM "maintainer"; default: "change.this@email.com").
+You can also provide the following optional environment variables:
 
-    $ VERSION=2.0.0 BUILD_NUMBER=3.yourcompany ./gradlew clean build buildUberJarRpm
+* `VERSION`: sets the RPM `Version` field; default: same as the code's `project.version` in8
+  [build.gradle](build.gradle), with any `-SNAPSHOT` suffix removed)
+* `RPM_RELEASE`: sets the RPM `Release`; default: `1` for releases, `0.<INCR>.<YYYYMMDD>git<COMMIT>` for snapshots
+  (where `<INCR>` will be set to the value of the environment variable `BUILD_NUMBER`, if available)
+* `MAINTAINER`: sets the RPM `Packager` field; default: "change.this@email.com")
 
-    >>> Generates build/distributions/storm-graphite_uber-2.0.0-3.yourcompany.noarch.rpm
+Example:
 
-The two environment variables `VERSION` and `BUILD_NUMBER` influence the generated RPM file _but do not modify the_
-_packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set to `0.1.0_SNAPSHOT` and you provide
+    $ VERSION=2.0.0 RPM_RELEASE=3.yourcompany ./gradlew clean build buildUberJarRpm
+
+    >>> Generates build/distributions/storm-graphite-2.0.0-3.yourcompany.noarch.rpm
+
+The environment variables `VERSION` and `RPM_RELEASE` influence the generated RPM file _but do not modify the_
+_packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set to `0.1.0-SNAPSHOT` and you provide
 `VERSION=2.0` when creating the RPM, then the generated RPM will have a version of 2.0 although the embedded
-storm-graphite jar file will have the version `0.1.0_SNAPSHOT` (and will be named accordingly).
+storm-graphite jar file will have the version `0.1.0-SNAPSHOT` (and will be named accordingly).
 
 
 ### IDE support
