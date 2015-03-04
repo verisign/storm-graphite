@@ -46,7 +46,7 @@ public class GraphiteMetricsConsumerTest {
     registrationArgument.put("metrics.graphite.port", "2003");
     registrationArgument.put("metrics.graphite.prefix", "unittest");
     TopologyContext topologyContext = mock(TopologyContext.class);
-    when(topologyContext.getStormId()).thenReturn("mockStormID");
+    when(topologyContext.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
     IErrorReporter errorReporter = mock(IErrorReporter.class);
 
     // When the Graphite reporter initializes
@@ -57,7 +57,7 @@ public class GraphiteMetricsConsumerTest {
     assertThat(consumer.getGraphiteHost()).isEqualTo("127.0.0.1");
     assertThat(consumer.getGraphitePort()).isEqualTo(2003);
     assertThat(consumer.getGraphitePrefix()).isEqualTo("unittest");
-    assertThat(consumer.getStormId()).isEqualTo("mockStormID");
+    assertThat(consumer.getStormId()).isEqualTo("Example-Storm-Topology-Name-13-1425495763");
   }
 
   @DataProvider(name = "generateDataPointsInt")
@@ -81,7 +81,7 @@ public class GraphiteMetricsConsumerTest {
             "unittest");
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("mockStormID");
+    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
@@ -94,7 +94,7 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.mockStormID.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
         String expValue = datamap.get(key).toString();
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
@@ -122,7 +122,7 @@ public class GraphiteMetricsConsumerTest {
             "unittest");
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("mockStormID");
+    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
@@ -135,7 +135,7 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.mockStormID.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
         String expValue = datamap.get(key).toString();
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
@@ -163,7 +163,7 @@ public class GraphiteMetricsConsumerTest {
             "unittest");
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("mockStormID");
+    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
@@ -176,7 +176,7 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.mockStormID.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
         String expValue = String.format("%.2f", datamap.get(key));
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
@@ -204,7 +204,7 @@ public class GraphiteMetricsConsumerTest {
             "unittest");
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn("mockStormID");
+    when(context.getStormId()).thenReturn("Example-Storm-Topology-Name-13-1425495763");
     IErrorReporter errorReporter = mock(IErrorReporter.class);
     consumer.prepare(stormConf, obj, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
@@ -218,7 +218,7 @@ public class GraphiteMetricsConsumerTest {
     for (DataPoint dp : dataPoints) {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
       for (String key : ((Map<String, Object>) dp.value).keySet()) {
-        String expMetricPath = "unittest.mockStormID.testStormComponentID." + dp.name + "." + key;
+        String expMetricPath = "unittest.Example-Storm-Topology-Name.testStormComponentID." + dp.name + "." + key;
         String expValue = String.format("%.2f", datamap.get(key));
         long expTimestamp = taskInfo.timestamp;
         verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);

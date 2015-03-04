@@ -4,7 +4,8 @@ IMPROVEMENTS
 
 * Add configuration option `metrics.graphite.min-connect-attempt-interval-secs`, which configures the minimum wait time
   (in seconds) in between connection attempts to Graphite.
-
+* Remove deployment specific nonce from Storm topology identifier to prevent Graphite server from building a new whisper
+  database whenever a topology is redeployed.
 
 # 0.1.4 (March 04, 2015)
 

@@ -170,7 +170,8 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
    * @return A fully qualified metric name assigned to data point
    */
   private String constructMetricName(TaskInfo taskInfo, DataPoint dataPoint) {
-    return stormId.concat(".").concat(taskInfo.srcComponentId).concat(".").concat(dataPoint.name);
+    String simpleStormId = stormId.substring(0, stormId.substring(0, stormId.lastIndexOf("-")).lastIndexOf("-"));
+    return simpleStormId.concat(".").concat(taskInfo.srcComponentId).concat(".").concat(dataPoint.name);
   }
 
   protected void graphiteConnect() {
