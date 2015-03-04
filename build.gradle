@@ -13,7 +13,7 @@ buildscript {
 }
 
 group = 'com.verisign.storm.metrics'
-version = '0.1.4_SNAPSHOT'
+version = '0.1.4-SNAPSHOT'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
@@ -41,11 +41,11 @@ ext {
   rpmMaintainer = System.getenv('MAINTAINER') ?: 'change.this@email.com'
   rpmVersion = System.getenv('VERSION') ?: "${project.version}"
   rpmRelease = '1'
-  if (rpmVersion.endsWith('_SNAPSHOT')) {
+  if (rpmVersion.endsWith('-SNAPSHOT')) {
     defaultBuildNumber = '1'
     releaseNumberIncrement = System.getenv('BUILD_NUMBER') ?: "${defaultBuildNumber}"
     snapshotReleaseTag = "0.${releaseNumberIncrement}.${buildTime()}git${shortCommit}"
-    rpmVersion = rpmVersion.replace('_SNAPSHOT', '')
+    rpmVersion = rpmVersion.replace('-SNAPSHOT', '')
     rpmRelease = snapshotReleaseTag
   }
 
