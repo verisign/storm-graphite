@@ -7,7 +7,7 @@ jdk:
   - oraclejdk7
 
 script:
-  - ./gradlew test
+  - ./gradlew build buildUberJarRpm
 
 after_success:
-  - ./gradlew cobertura coveralls
+  - ./gradlew coveralls
