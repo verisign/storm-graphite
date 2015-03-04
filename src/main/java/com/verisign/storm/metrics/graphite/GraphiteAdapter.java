@@ -32,17 +32,17 @@ public class GraphiteAdapter {
   private static final long MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
   private final InetSocketAddress server;
   private final Graphite graphite;
-  private long lastConnectAttemptTimestamp;
+  private long lastConnectAttemptTimestampMs;
 
   public GraphiteAdapter(InetSocketAddress server) {
     this.server = server;
     this.graphite = new Graphite(server);
-    lastConnectAttemptTimestamp = 0;
+    lastConnectAttemptTimestampMs = 0;
   }
 
   public void connect() throws GraphiteConnectionAttemptFailure {
+    lastConnectAttemptTimestampMs = nowMs();
     try {
-      lastConnectAttemptTimestamp = System.currentTimeMillis();
       graphite.connect();
     }
     catch (IllegalStateException e) {
@@ -53,6 +53,10 @@ public class GraphiteAdapter {
       LOG.error(msg);
       throw new GraphiteConnectionAttemptFailure(msg);
     }
+  }
+
+  private long nowMs() {
+    return System.currentTimeMillis();
   }
 
   public void disconnect() {
@@ -97,7 +101,7 @@ public class GraphiteAdapter {
   private void handleFailedSend(Exception e) {
     String trace = Throwables.getStackTraceAsString(e);
     LOG.error("Failed to send update to " + serverFingerprint() + ": " + e.getMessage() + "\n" + trace);
-    if((System.currentTimeMillis() - lastConnectAttemptTimestamp) > MIN_CONNECT_ATTEMPT_INTERVAL_SECS) {
+    if (reconnectingAllowed(nowMs())) {
       try {
         this.disconnect();
         this.connect();
@@ -109,6 +113,11 @@ public class GraphiteAdapter {
     else {
       LOG.warn("Connection attempt limit exceeded to Carbon daemon running at " + serverFingerprint());
     }
+  }
+
+  private boolean reconnectingAllowed(long timestampMs) {
+    long secondsSinceLastConnectAttempt = (timestampMs - lastConnectAttemptTimestampMs) / 1000;
+    return secondsSinceLastConnectAttempt > MIN_CONNECT_ATTEMPT_INTERVAL_SECS;
   }
 
   public String serverFingerprint() {
