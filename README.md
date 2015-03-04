@@ -80,7 +80,8 @@ The end result of this workflow is a storm-graphite jar file in the `lib/` folde
 
 ## Building and packaging
 
-Your development machine requires a Java JDK. The code works with both Java 6 and Java 7.
+Your development machine requires a Java JDK. The code works with both Java 6 and Java 7, though by default the build
+is against Java 7.
 
 
 ### Run the build
