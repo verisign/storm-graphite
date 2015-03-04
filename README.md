@@ -159,7 +159,7 @@ You can also provide the following optional environment variables:
 
 * `VERSION`: sets the RPM `Version` field; default: same as the code's `project.version` in8
   [build.gradle](build.gradle), with any `-SNAPSHOT` suffix removed)
-* `RPM_RELEASE`: sets the RPM `Release`; default: `1` for releases, `0.<INCR>.<YYYYMMDD>git<COMMIT>` for snapshots
+* `RPM_RELEASE`: sets the RPM `Release` field; default: `1` for releases, `0.<INCR>.<YYYYMMDD>git<COMMIT>` for snapshots
   (where `<INCR>` will be set to the value of the environment variable `BUILD_NUMBER`, if available)
 * `MAINTAINER`: sets the RPM `Packager` field; default: "change.this@email.com")
 
