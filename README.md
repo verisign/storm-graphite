@@ -78,6 +78,12 @@ You must build and package storm-graphite, and then deploy the package to the ma
 The end result of this workflow is a storm-graphite jar file in the `lib/` folder of the Storm installation directory.
 
 
+## Supported Storm versions
+
+* Storm 0.9.x
+* Storm 0.10.0 (not yet released by Apache Storm project)
+
+
 ## Building and packaging
 
 Your development machine requires a Java JDK. The code works with both Java 6 and Java 7, though by default the build
