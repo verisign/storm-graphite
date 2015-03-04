@@ -1,6 +1,6 @@
 # storm-graphite [![Build Status](https://travis-ci.org/verisign/storm-graphite.svg?branch=master)](https://travis-ci.org/verisign/storm-graphite) [![Coverage Status](https://coveralls.io/repos/verisign/storm-graphite/badge.svg?branch=master)](https://coveralls.io/r/verisign/storm-graphite?branch=master)
 
-Example implementation of a custom [Apache Storm](https://storm.apache.org/) `IMetricsConsumer`
+An [Apache Storm](https://storm.apache.org/) `IMetricsConsumer`
 ([source](https://github.com/apache/storm/blob/master/storm-core/src/jvm/backtype/storm/metric/api/IMetricsConsumer.java))
 that forwards Storm's built-in metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server for
 real-time graphing, visualization, and operational dashboards.
