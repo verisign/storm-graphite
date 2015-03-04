@@ -117,23 +117,29 @@ Analyze code coverage:
 
 ### Package the jar as RPM
 
-    $ ./gradlew clean build buildRpm
+The RPM provides a jar that contains storm-graphite as well as a relocated
+[Dropwizard Metrics](https://dropwizard.github.io/metrics/) library.  We include the Metrics library to ensure that
+storm-graphite runs against a specific, known version of Metrics, and the relocation will prevent conflicts in case
+your applications use a different version of Metrics.
 
-    >>> Generates build/distributions/storm-graphite-0.1.4_SNAPSHOT-1.verisign.noarch.rpm
-
-To package the uber-jar, containing all of the necessary dependencies:
+Create the RPM:
 
     $ ./gradlew clean build buildUberJarRpm
 
     >>> Generates build/distributions/storm-graphite_uber-0.1.4_SNAPSHOT-1.verisign.noarch.rpm
 
+The default RPM settings will place the storm-graphite jar under `/opt/storm/lib/`:
+
+    # Example location
+    /opt/storm/lib/storm-graphite-0.1.4_SNAPSHOT-all.jar
+
 You can also provide the optional environment variables `VERSION` (sets the RPM "version"; default: same as the
 code's `project.version` in [build.gradle](build.gradle)), `BUILD_NUMBER` (sets the RPM "iteration"; default:
 "1.verisign") and `MAINTAINER` (sets the RPM "maintainer"; default: "change.this@email.com").
 
-    $ VERSION=2.0.0 BUILD_NUMBER=3.yourcompany ./gradlew clean jar buildRpm
+    $ VERSION=2.0.0 BUILD_NUMBER=3.yourcompany ./gradlew clean build buildUberJarRpm
 
-    >>> Generates build/distributions/storm-graphite-2.0.0-3.yourcompany.noarch.rpm
+    >>> Generates build/distributions/storm-graphite_uber-2.0.0-3.yourcompany.noarch.rpm
 
 The two environment variables `VERSION` and `BUILD_NUMBER` influence the generated RPM file _but do not modify the_
 _packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set to `0.1.0_SNAPSHOT` and you provide
