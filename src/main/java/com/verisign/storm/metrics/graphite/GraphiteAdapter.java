@@ -30,7 +30,7 @@ public class GraphiteAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteAdapter.class);
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
-  private final InetSocketAddress server;
+  private final String serverFingerprint;
   private final int minConnectAttemptIntervalSecs;
   private final Graphite graphite;
   private long lastConnectAttemptTimestampMs;
@@ -43,10 +43,14 @@ public class GraphiteAdapter {
     if (server == null) {
       throw new IllegalArgumentException("server address must not be null");
     }
-    this.server = server;
+    serverFingerprint = server.getAddress() + ":" + server.getPort();
     this.minConnectAttemptIntervalSecs = minConnectAttemptIntervalSecs;
     this.graphite = new Graphite(server);
     lastConnectAttemptTimestampMs = 0;
+  }
+
+  public String getServerFingerprint() {
+    return serverFingerprint;
   }
 
   public void connect() throws GraphiteConnectionAttemptFailure {
@@ -58,7 +62,7 @@ public class GraphiteAdapter {
       // do nothing, already connected
     }
     catch (IOException e) {
-      String msg = "Could not connect to Carbon daemon running at " + serverFingerprint() + ": " + e.getMessage();
+      String msg = "Could not connect to Carbon daemon running at " + serverFingerprint + ": " + e.getMessage();
       LOG.error(msg);
       throw new GraphiteConnectionAttemptFailure(msg);
     }
@@ -73,7 +77,7 @@ public class GraphiteAdapter {
       graphite.close();
     }
     catch (IOException e) {
-      LOG.error("Could not disconnect from Carbon daemon running at " + serverFingerprint() + ": " + e.getMessage());
+      LOG.error("Could not disconnect from Carbon daemon running at " + serverFingerprint + ": " + e.getMessage());
     }
   }
 
@@ -109,7 +113,7 @@ public class GraphiteAdapter {
 
   private void handleFailedSend(Exception e) {
     String trace = Throwables.getStackTraceAsString(e);
-    LOG.error("Failed to send update to " + serverFingerprint() + ": " + e.getMessage() + "\n" + trace);
+    LOG.error("Failed to send update to " + serverFingerprint + ": " + e.getMessage() + "\n" + trace);
     if (reconnectingAllowed(nowMs())) {
       try {
         this.disconnect();
@@ -120,7 +124,7 @@ public class GraphiteAdapter {
       }
     }
     else {
-      LOG.warn("Connection attempt limit exceeded to Carbon daemon running at " + serverFingerprint());
+      LOG.warn("Connection attempt limit exceeded to Carbon daemon running at " + serverFingerprint);
     }
   }
 
@@ -129,9 +133,6 @@ public class GraphiteAdapter {
     return secondsSinceLastConnectAttempt > minConnectAttemptIntervalSecs;
   }
 
-  public String serverFingerprint() {
-    return server.getAddress() + ":" + server.getPort();
-  }
 
   /**
    * Returns the number of failed writes to the Graphite server.

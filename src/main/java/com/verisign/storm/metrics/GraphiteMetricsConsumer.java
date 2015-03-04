@@ -181,7 +181,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
     catch (GraphiteConnectionAttemptFailure e) {
       String trace = Throwables.getStackTraceAsString(e);
-      LOG.error("Could not connect to Graphite server " + graphite.serverFingerprint() + ": " + trace);
+      LOG.error("Could not connect to Graphite server " + graphite.getServerFingerprint() + ": " + trace);
     }
   }
 
@@ -199,7 +199,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
     catch (IOException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      String msg = "Could not send metrics update to Graphite server " + graphite.serverFingerprint() + ": " + trace +
+      String msg = "Could not send metrics update to Graphite server " + graphite.getServerFingerprint() + ": " + trace +
           " (" + graphite.getFailures() + " failed attempts so far)";
       LOG.error(msg);
     }
