@@ -170,15 +170,19 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
    */
   private String constructMetricName(TaskInfo taskInfo) {
     StringBuilder sb = new StringBuilder();
-    
-    // Removing nonce appended to topology name (e.g. "Example-Topology-1-2345" -> "Example-Topology")
-    String simpleStormId = stormId.substring(0, stormId.substring(0, stormId.lastIndexOf("-")).lastIndexOf("-"));
+    String simpleStormId = removeNonce(stormId);
     sb.append(simpleStormId).append(".");
     sb.append(taskInfo.srcComponentId).append(".");
     sb.append(taskInfo.srcWorkerHost).append(".");
     sb.append(taskInfo.srcWorkerPort).append(".");
-
     return sb.toString();
+  }
+
+  /**
+   * Removes nonce appended to topology name (e.g. "Example-Topology-1-2345" -> "Example-Topology")
+   */
+  private String removeNonce(String topologyId) {
+    return topologyId.substring(0, topologyId.substring(0, topologyId.lastIndexOf("-")).lastIndexOf("-"));
   }
 
   protected void graphiteConnect() {
