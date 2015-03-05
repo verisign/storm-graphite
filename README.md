@@ -212,7 +212,6 @@ $ ./gradlew cleanEclipse eclipse
 
 ## Storm integration
 
-
 ### Installation
 
 The storm-graphite jar file must be made available on Storm's classpath on every node in a Storm cluster.
@@ -273,6 +272,34 @@ storm::config_map:
 ```
 
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
+
+
+### Execution model
+
+The Graphite metrics consumer will run for every topology with which it is registered:
+
+* If you have added the metrics consumer to Storm's global configuration file `storm.yaml, then every topology will run
+  its own metrics consumer.
+* If you have registered the metrics consumer on a topology level, i.e. via a topology's configuration, then it will
+  run only for this topology / these topologies.
+
+At runtime the metrics consumer is executed as a system bolt, which is hidden in the Storm UI by default (click on
+the button "Show System Stats" at the bottom of the Storm UI to display the bolt).  Every other, non-system topology
+component (i.e. spouts and bolts) is then wired to the metrics system bolt and will be sending metrics to the bolt
+on a `topology.builtin.metrics.bucket.size.secs` interval.
+
+For example, if you have a topology with:
+
+* 1 spout with parallelism 5
+* 1 bolt A with parallelism 8
+* 1 bolt B with parallelism 3
+
+then `5 + 8 + 3 = 16` spout/bolt instances are sending a full set of metrics every
+`N = topology.builtin.metrics.bucket.size.secs` seconds to the metrics consumer bolt.
+
+What does this mean for Graphite?  First, every set of metrics being sent to the bolt will cause a new TCP
+connection being established to Graphite, which will be closed again once the set of metrics has been fully sent to
+Graphite.  In our example above, 16 connections will be created/closed during a window of `N` seconds.
 
 
 <a name="graphite-configuration"></a>
