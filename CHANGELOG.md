@@ -1,11 +1,18 @@
 # 0.1.5 (unreleased)
 
+BREAKING CHANGES
+
+* The metrics path of generated metrics has changed.  We are now removing the nonce from topology ids, and append the
+  worker hostname, worker port, and task id to the metrics path.  This results in finer granularity of metrics and
+  makes the carbon configuration of Graphite as well as querying Graphite slightly simpler.
+
 IMPROVEMENTS
 
 * Add configuration option `metrics.graphite.min-connect-attempt-interval-secs`, which configures the minimum wait time
   (in seconds) in between connection attempts to Graphite.
 * Remove deployment specific nonce from Storm topology identifier to prevent Graphite server from building a new whisper
   database whenever a topology is redeployed.
+
 
 # 0.1.4 (March 04, 2015)
 
