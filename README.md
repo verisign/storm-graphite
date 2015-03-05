@@ -306,6 +306,20 @@ Graphite.  In our example above, 16 connections will be created/closed during a 
 
 ## Configuring Graphite/Grafana
 
+
+### Metrics path
+
+The metrics path is generated according to the following scheme:
+
+    ${metrics.graphite.prefix}.TOPOLOGY_ID_WITHOUT_NONCE.COMPONENT_ID.WORKER_HOST.WORKER_PORT.TASK_ID.DATAPOINT_NAME.KEY
+
+An example path may look like:
+
+    myCustomGraphitePrefix.myTopologyName.myBoltId.storm-slave-01.6700.3008.foo.bar
+
+
+### Graphite queries
+
 Assuming that you have a working Graphite or Grafana instance up and running, you can create queries such as the
 following to visualize your Storm metrics.  The example below is a Graphite query to construct the "Storm topologies:
 used Java heap space" visualization in the screenshots above:
