@@ -124,6 +124,7 @@ public class GraphiteMetricsConsumerTest {
               testStormComponentID + "." +
               testStormSrcWorkerHost + "." +
               testStormSrcWorkerPort + "." +
+              testStormSrcTaskId + "." +
               dp.name + "." +
               key;
   }
