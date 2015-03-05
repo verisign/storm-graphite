@@ -365,8 +365,8 @@ groupByNode(storm.cluster.metrics.*.*.*.*.*.*.*.*.__execute-latency.*, 4, 'sumSe
 > of each machine.  For example, the query above works out of the box for hostnames that match
 > `server1.foo.example.com` (= four components).  If, say, your scheme is `server1.example.com` (= three components),
 > then the depth of the metrics path will be reduced by 1;  e.g.
-> "storm.cluster.metrics.*.__system.*.*.*.*.*.*.memory.heap.usedBytes" becomes
-> "storm.cluster.metrics.*.__system.*.*.*.*.*.memory.heap.usedBytes".
+> "storm.cluster.metrics.\*.__system.\*.\*.\*.\*.\*.\*.memory.heap.usedBytes" becomes
+> "storm.cluster.metrics.\*.__system.\*.\*.\*.\*.\*.memory.heap.usedBytes".
 
 This query provides the data for the following Grafana visualization:
 
