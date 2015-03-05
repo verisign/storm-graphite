@@ -26,9 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -128,7 +126,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     graphiteConnect();
     
     String metricPrefix = graphitePrefix.isEmpty() ?
-        constructMetricName(taskInfo) : graphitePrefix.concat(".").concat(constructMetricName(taskInfo));
+        constructMetricPrefix(taskInfo) : graphitePrefix.concat(".").concat(constructMetricPrefix(taskInfo));
 
     for (DataPoint dataPoint : dataPoints) {
       // TODO: Correctly process metrics of the messaging layer queues and connection states.
@@ -162,13 +160,13 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   }
 
   /**
-   * Construct a fully qualified name to assign to a particular metric described by dataPoint.
+   * Constructs a fully qualified metric prefix.
    *
    * @param taskInfo  The information regarding the context in which the data point is supplied
    *
-   * @return A fully qualified metric name assigned to data point
+   * @return A fully qualified metric prefix.
    */
-  private String constructMetricName(TaskInfo taskInfo) {
+  private String constructMetricPrefix(TaskInfo taskInfo) {
     StringBuilder sb = new StringBuilder();
     String simpleStormId = removeNonce(stormId);
     sb.append(simpleStormId).append(".");
