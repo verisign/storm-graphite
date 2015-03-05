@@ -125,8 +125,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
     
-    String metricPrefix = graphitePrefix.isEmpty() ?
-        constructMetricPrefix(taskInfo) : graphitePrefix.concat(".").concat(constructMetricPrefix(taskInfo));
+    String metricPrefix = constructMetricPrefix(graphitePrefix, taskInfo);
 
     for (DataPoint dataPoint : dataPoints) {
       // TODO: Correctly process metrics of the messaging layer queues and connection states.
@@ -166,10 +165,12 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
    *
    * @return A fully qualified metric prefix.
    */
-  private String constructMetricPrefix(TaskInfo taskInfo) {
+  private String constructMetricPrefix(String prefixFromConfig, TaskInfo taskInfo) {
     StringBuilder sb = new StringBuilder();
-    String simpleStormId = removeNonce(stormId);
-    sb.append(simpleStormId).append(".");
+    if (prefixFromConfig != null && !prefixFromConfig.isEmpty()) {
+      sb.append(prefixFromConfig).append(".");
+    }
+    sb.append(removeNonce(stormId)).append(".");
     sb.append(taskInfo.srcComponentId).append(".");
     sb.append(taskInfo.srcWorkerHost).append(".");
     sb.append(taskInfo.srcWorkerPort).append(".");
