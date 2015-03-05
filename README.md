@@ -25,7 +25,7 @@ Table of Contents
 
 ---
 
-*Example 1: [Grafana](grafana-visualization-example-01.png) showing used Java heap space across all topologies.*
+*Example 1: [Grafana](grafana-visualization-example-01.png) showing execution latency of bolts.*
 
 ![Example Grafana UI](images/grafana-visualization-example-01.png)
 
@@ -313,9 +313,11 @@ The metrics path is generated according to the following scheme:
 
     ${metrics.graphite.prefix}.TOPOLOGY_ID_WITHOUT_NONCE.COMPONENT_ID.WORKER_HOST.WORKER_PORT.TASK_ID.DATAPOINT_NAME.KEY
 
+where `WORKER_HOST` is the fully qualified hostname of a machine.
+
 An example path may look like:
 
-    myCustomGraphitePrefix.myTopologyName.myBoltId.storm-slave-01.6700.3008.foo.bar
+    myCustomGraphitePrefix.myTopologyName.myBoltId.storm-slave-01.foo.example.com.6700.3008.foo.bar
 
 
 ### Carbon configuration
@@ -352,11 +354,19 @@ Then carbon's storage settings should have an entry similar to:
 
 Assuming that you have a working Graphite or Grafana instance up and running, you can create queries such as the
 following to visualize your Storm metrics.  The example below is a Graphite query to construct the "Storm topologies:
-used Java heap space" visualization in the screenshots above:
+used Java heap space" visualization in the screenshots above, with `metrics.graphite.prefix` set to
+`storm.cluster.metrics`:
 
 ```
-groupByNode(aliasSub(storm.cluster.metrics.*.__system.memory.heap.usedBytes, '^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)$', 'storm.cluster.metrics.\1.\4'), 3, 'sumSeries')
+groupByNode(storm.cluster.metrics.*.*.*.*.*.*.*.*.__execute-latency.*, 4, 'sumSeries')
 ```
+
+> Note: The exact metric path depends on your hostname scheme because the path contains the fully qualified hostname
+> of each machine.  For example, the query above works out of the box for hostnames that match
+> `server1.foo.example.com` (= four components).  If, say, your scheme is `server1.example.com` (= three components),
+> then the depth of the metrics path will be reduced by 1;  e.g.
+> "storm.cluster.metrics.*.__system.*.*.*.*.*.*.memory.heap.usedBytes" becomes
+> "storm.cluster.metrics.*.__system.*.*.*.*.*.memory.heap.usedBytes".
 
 This query provides the data for the following Grafana visualization:
 
@@ -365,15 +375,17 @@ This query provides the data for the following Grafana visualization:
 Further examples:
 
 ```
+# Used Java heap space by worker process
+groupByNode(aliasSub(storm.cluster.metrics.*.__system.*.*.*.*.*.*.memory.heap.usedBytes, '^storm\.cluster\.metrics\.(.+)\.__system\.(.+)\.(.+)\.(.+)\.(.+)\.(.+)\.(.*)\.memory.heap.usedBytes$', 'storm.cluster.metrics.\1-\2-\6.memory.heap.usedBytes'), 3, 'sumSeries')
+
 # Java garbage collection time by topology
-groupByNode(aliasSub(storm.cluster.metrics.*.__system.GC.*.timeMs, "^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.__system.GC\.(.*)\.timeMs$", "storm.cluster.metrics.\1.__system.GC.\4.timeMs"), 3, "sumSeries")
+groupByNode(storm.cluster.metrics.*.__system.*.*.*.*.*.*.GC.*.timeMs, 3, 'sumSeries')
 
 # Execution count (of Storm tuples) by bolt
-groupByNode(aliasSub(storm.cluster.metrics.*.*.__execute-count.*, "^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)\.__execute-count\.", "storm.cluster.metrics.\1.\4.__execute-count"), 4, "sumSeries")
+groupByNode(storm.cluster.metrics.*.*.*.*.*.*.*.*.__execute-count.*, 4, 'sumSeries')
 
 # Execution latency by bolt
-groupByNode(aliasSub(storm.cluster.metrics.*.*.__execute-latency.*, "^storm\.cluster\.metrics\.(.*)-(\d+)-(\d+)\.(.*)\.__execute-latency\.", "storm.cluster.metrics.\1.\4.__execute-latency"), 4, "sumSeries")
-
+groupByNode(storm.cluster.metrics.*.*.*.*.*.*.*.*.__execute-latency.*, 4, 'sumSeries')
 ```
 
 
