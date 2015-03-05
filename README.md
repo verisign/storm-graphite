@@ -25,14 +25,9 @@ Table of Contents
 
 ---
 
-*Example 1: [Grafana](grafana-visualization-example-01.png) showing execution latency of bolts.*
+*Example: [Grafana](grafana-visualization-example-01.png) showing execution latency of bolts.*
 
 ![Example Grafana UI](images/grafana-visualization-example-01.png)
-
-*Example 2: [Graphite](https://github.com/graphite-project/graphite-web) showing ack count of the "final ranker" bolt*
-*in the RollingTopWords topology from [storm-starter](https://github.com/apache/storm/tree/master/examples/storm-starter).*
-
-![Example Graphite UI](images/Storm-Graphite-ScreenShot.png)
 
 ---
 
