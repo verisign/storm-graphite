@@ -318,6 +318,36 @@ An example path may look like:
     myCustomGraphitePrefix.myTopologyName.myBoltId.storm-slave-01.6700.3008.foo.bar
 
 
+### Carbon configuration
+
+You must configure carbon's storage settings (`storage-schemas.conf`) so that these settings match the configuration of
+the Graphite metrics consumer.
+
+* The _pattern_ setting must match the `metrics.graphite.prefix` of your storm-graphite setup.
+* The _retention_ setting -- notably the first, most granular field -- must match the
+  `topology.builtin.metrics.bucket.size.secs` of your storm-graphite setup.
+
+For example, if you have the following Graphite metrics consumer settings in `storm.yaml`:
+
+```yaml
+---
+### Note: This is Storm's storm.yaml configuration file
+
+topology.builtin.metrics.bucket.size.secs: 10
+topology.metrics.consumer.register:
+  - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
+    argument:
+      metrics.graphite.prefix: "storm.cluster.metrics"
+    ...
+```
+
+Then carbon's storage settings should have an entry similar to:
+
+    [storm_metrics]
+    pattern = ^storm\.cluster\.metrics\.
+    retentions = 10s:2d,1m:30d,5m:90d,1h:2y
+
+
 ### Graphite queries
 
 Assuming that you have a working Graphite or Grafana instance up and running, you can create queries such as the
