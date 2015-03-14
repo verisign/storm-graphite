@@ -171,6 +171,27 @@ task rpm(type: Rpm) {
 }
 rpm.dependsOn(shadowJar)
 
+buildDeb {
+  packageName = "${project.name}_slim"
+  into '/opt/storm'
+
+  from(jar.outputs.files) {
+    into 'lib'
+  }
+}
+buildDeb.dependsOn(jar)
+
+// Creates a DEB that packages an uber jar.
+task deb(type: Deb) {
+  packageName = "${project.name}"
+  into '/opt/storm'
+
+  from(shadowJar.outputs.files) {
+    into 'lib'
+  }
+}
+deb.dependsOn(shadowJar)
+
 shadowJar {
 
   // Relocate Metrics library to prevent conflicts with user code that depends on Metrics, too.

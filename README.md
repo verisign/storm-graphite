@@ -170,7 +170,7 @@ The default RPM settings will place the storm-graphite jar under `/opt/storm/lib
 
 You can also provide the following optional environment variables:
 
-* `VERSION`: sets the RPM `Version` field; default: same as the code's `project.version` in8
+* `VERSION`: sets the RPM `Version` field; default: same as the code's `project.version` in
   [build.gradle](build.gradle), with any `-SNAPSHOT` suffix removed)
 * `RPM_RELEASE`: sets the RPM `Release` field; default: `1` for releases, `0.<INCR>.<YYYYMMDD>git<COMMIT>` for snapshots
   (where `<INCR>` will be set to the value of the environment variable `BUILD_NUMBER`, if available)
@@ -187,6 +187,12 @@ _packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set t
 `VERSION=2.0` when creating the RPM, then the generated RPM will have a version of 2.0 although the embedded
 storm-graphite jar file will have the version `0.1.0-SNAPSHOT` (and will be named accordingly).
 
+### Package the jar as a DEB
+Example:
+
+	$VERSION=2.0.0 RPM_RELEASE=3.yourcompany ./gradlew clean build deb
+	
+	>>> Generates build/distributions/storm-graphite_2.0.0-3.yourcompany_all.deb
 
 ### IDE support
 
