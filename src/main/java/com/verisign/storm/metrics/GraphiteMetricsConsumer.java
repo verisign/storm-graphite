@@ -36,7 +36,7 @@ import java.util.Map;
  *
  * <pre>
  * {@code
- *   conf.registerMetricsConsumer(backtype.storm.metrics.GraphiteMetricsConsumer.class, 1);
+ *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
  *   conf.put("metrics.graphite.host", "<GRAPHITE HOSTNAME>");
  *   conf.put("metrics.graphite.port", "<GRAPHITE PORT>");
  *   conf.put("metrics.graphite.prefix", "<DOT DELIMITED PREFIX>");
