@@ -289,6 +289,12 @@ storm::config_map:
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
 
 
+#### Restart Storm daemons
+
+Once storm-graphite is installed and configured, you must restart the Storm daemons on each cluster node for these
+changes to take effect.  To minimize cluster downtime you can perform a rolling restart.
+
+
 ### Execution model
 
 The Graphite metrics consumer will run for every topology with which it is registered:
