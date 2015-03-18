@@ -224,11 +224,18 @@ classpath on every node in a Storm cluster.
 > not include transitive dependencies of storm-graphite.  If you do use the wrong jar file, you will run into
 > [NoClassDefFoundError](https://github.com/verisign/storm-graphite/issues/6#issuecomment-82580787) at run-time.
 
-* The easiest way to achieve this is to place the `*-all.jar` file into `$STORM_HOME/lib/`.
-* If you use [puppet-storm](https://github.com/miguno/puppet-storm) and the associated RPM
-  [wirbelsturm-rpm-storm](https://github.com/miguno/wirbelsturm-rpm-storm) of
-  [Wirbelsturm](https://github.com/miguno/wirbelsturm), then this is the directory `/opt/storm/lib/`.
-  Preferably you will deploy the jar file via automated deployment, e.g. through RPM/Puppet.
+* Option 1: Package and then install the RPM (or DEB) of storm-graphite on each Storm node.  Make sure that the
+  `$STORM_HOME/lib/` of your Storm installation matches the installation prefix of the storm-graphite RPM/DEB
+  (which is `/opt/storm/lib/`).  If you need to customize the location, modify [build.gradle](build.gradle)
+  accordingly (search the file for `/opt/storm`).
+    * Note: The `/opt/storm/lib/` location matches the directory layout created by
+      [puppet-storm](https://github.com/miguno/puppet-storm) and the associated RPM
+      [wirbelsturm-rpm-storm](https://github.com/miguno/wirbelsturm-rpm-storm) of
+      [Wirbelsturm](https://github.com/miguno/wirbelsturm).  So if you use any of these tools already, you're
+      good to go.
+* Option 2: Place the `*-all.jar` file into `$STORM_HOME/lib/` without packaging the jar file into an RPM or DEB.
+
+Option 1 is typically preferred by those users who already have automated deployment setups (think: Puppet, Ansible).
 
 
 ### Configuration
