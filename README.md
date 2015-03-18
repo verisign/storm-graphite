@@ -99,6 +99,9 @@ is against Java 7.
 
 ### Run the build
 
+The build will create several jars.  You must make one and only one of these jar files available to Storm:
+the `storm-graphite-${VERSION}-all.jar` (note the `-all`).
+
     $ ./gradlew clean build
 
     >>> build/libs/ (artifacts)
@@ -187,26 +190,25 @@ _packaged jar file_;  e.g. if the `version` parameter in `build.gradle` is set t
 `VERSION=2.0` when creating the RPM, then the generated RPM will have a version of 2.0 although the embedded
 storm-graphite jar file will have the version `0.1.0-SNAPSHOT` (and will be named accordingly).
 
-### Package the jar as a DEB
+
+### Package the jar as DEB
+
 Example:
 
-	$VERSION=2.0.0 RPM_RELEASE=3.yourcompany ./gradlew clean build deb
-	
-	>>> Generates build/distributions/storm-graphite_2.0.0-3.yourcompany_all.deb
+    $VERSION=2.0.0 RPM_RELEASE=3.yourcompany ./gradlew clean build deb
+
+    >>> Generates build/distributions/storm-graphite_2.0.0-3.yourcompany_all.deb
+
 
 ### IDE support
 
 IntelliJ IDEA:
 
-```
-$ ./gradlew cleanIdea idea
-```
+    $ ./gradlew cleanIdea idea
 
 Eclipse:
 
-```
-$ ./gradlew cleanEclipse eclipse
-```
+    $ ./gradlew cleanEclipse eclipse
 
 
 <a name="storm-integration"></a>
@@ -215,9 +217,14 @@ $ ./gradlew cleanEclipse eclipse
 
 ### Installation
 
-The storm-graphite jar file must be made available on Storm's classpath on every node in a Storm cluster.
+The jar file `storm-graphite-${VERSION}-all.jar` -- and only this jar file -- must be made available on Storm's
+classpath on every node in a Storm cluster.
 
-* The easiest way to achieve this is to place the jar file into `$STORM_HOME/lib/`.
+> **IMPORTANT**: Do not use `storm-graphite-${VERSION}.jar` instead of the `-all` jar file because the former does
+> not include transitive dependencies of storm-graphite.  If you do use the wrong jar file, you will run into
+> [NoClassDefFoundError](https://github.com/verisign/storm-graphite/issues/6#issuecomment-82580787) at run-time.
+
+* The easiest way to achieve this is to place the `*-all.jar` file into `$STORM_HOME/lib/`.
 * If you use [puppet-storm](https://github.com/miguno/puppet-storm) and the associated RPM
   [wirbelsturm-rpm-storm](https://github.com/miguno/wirbelsturm-rpm-storm) of
   [Wirbelsturm](https://github.com/miguno/wirbelsturm), then this is the directory `/opt/storm/lib/`.
