@@ -172,7 +172,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
     sb.append(removeNonce(stormId)).append(".");
     sb.append(taskInfo.srcComponentId).append(".");
-    sb.append(taskInfo.srcWorkerHost.replace('.', '-')).append(".");
+    sb.append(taskInfo.srcWorkerHost).append(".");
     sb.append(taskInfo.srcWorkerPort).append(".");
     sb.append(taskInfo.srcTaskId).append(".");
     return sb.toString();
