@@ -16,9 +16,9 @@ package com.verisign.storm.metrics.graphite;
 
 import java.io.IOException;
 
-public class GraphiteConnectionAttemptFailure extends IOException {
+public class GraphiteConnectionFailureException extends IOException {
 
-  public GraphiteConnectionAttemptFailure(String s) {
+  public GraphiteConnectionFailureException(String s) {
     super(s);
   }
 

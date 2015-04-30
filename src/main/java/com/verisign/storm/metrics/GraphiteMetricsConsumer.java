@@ -18,9 +18,10 @@ import backtype.storm.metric.api.IMetricsConsumer;
 import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.graphite.GraphiteAdapter;
+import com.verisign.storm.metrics.adapters.GraphiteAdapter;
+import com.verisign.storm.metrics.adapters.IAdapter;
 import com.verisign.storm.metrics.graphite.GraphiteCodec;
-import com.verisign.storm.metrics.graphite.GraphiteConnectionAttemptFailure;
+import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +74,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   private String graphitePrefix;
   private int graphiteMinConnectAttemptIntervalSecs;
   private String stormId;
-  private GraphiteAdapter graphite;
+  private IAdapter graphite;
 
   protected String getStormId() {
     return stormId;
@@ -191,27 +192,27 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     try {
       graphite.connect();
     }
-    catch (GraphiteConnectionAttemptFailure e) {
+    catch (GraphiteConnectionFailureException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      LOG.error("Could not connect to Graphite server " + graphite.getServerFingerprint() + ": " + trace);
+      LOG.error("Could not connect to adapter backend " + graphite.getServerFingerprint() + ": " + trace);
     }
   }
 
   protected void sendToGraphite(String metricPath, String value, long timestamp) {
     if (graphite != null ) {
-      graphite.appendToSendBuffer(metricPath, value, timestamp);
+      graphite.appendToBuffer(metricPath, value, timestamp);
     }
   }
 
   protected void flush() {
     try {
       if (graphite != null) {
-        graphite.flushSendBuffer();
+        graphite.sendBufferContents();
       }
     }
     catch (IOException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      String msg = "Could not send metrics update to Graphite server " + graphite.getServerFingerprint() + ": " + trace +
+      String msg = "Could not send metrics update to backend server " + graphite.getServerFingerprint() + ": " + trace +
           " (" + graphite.getFailures() + " failed attempts so far)";
       LOG.error(msg);
     }
@@ -219,7 +220,13 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
   protected void graphiteDisconnect() {
     if (graphite != null) {
-      graphite.disconnect();
+      try {
+        graphite.disconnect();
+      }
+      catch (GraphiteConnectionFailureException e) {
+        String trace = Throwables.getStackTraceAsString(e);
+        LOG.error("Could not disconnect from adapter backend " + graphite.getServerFingerprint() + ": " + trace);
+      }
     }
   }
 

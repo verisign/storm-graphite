@@ -12,10 +12,11 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.graphite;
+package com.verisign.storm.metrics.adapters;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
+import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ import java.net.InetSocketAddress;
  * This class is a wrapper for the Graphite class in the Metrics library.  It encapsulates the handling of errors that
  * may occur during network communication with Graphite/Carbon.
  */
-public class GraphiteAdapter {
+public class GraphiteAdapter implements IAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteAdapter.class);
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
@@ -49,11 +50,11 @@ public class GraphiteAdapter {
     lastConnectAttemptTimestampMs = 0;
   }
 
-  public String getServerFingerprint() {
+  @Override public String getServerFingerprint() {
     return serverFingerprint;
   }
 
-  public void connect() throws GraphiteConnectionAttemptFailure {
+  @Override public void connect() throws GraphiteConnectionFailureException {
     lastConnectAttemptTimestampMs = nowMs();
     try {
       graphite.connect();
@@ -64,7 +65,7 @@ public class GraphiteAdapter {
     catch (IOException e) {
       String msg = "Could not connect to Carbon daemon running at " + serverFingerprint + ": " + e.getMessage();
       LOG.error(msg);
-      throw new GraphiteConnectionAttemptFailure(msg);
+      throw new GraphiteConnectionFailureException(msg);
     }
   }
 
@@ -72,7 +73,7 @@ public class GraphiteAdapter {
     return System.currentTimeMillis();
   }
 
-  public void disconnect() {
+  @Override public void disconnect() {
     try {
       graphite.close();
     }
@@ -81,7 +82,14 @@ public class GraphiteAdapter {
     }
   }
 
-  public void appendToSendBuffer(String metricPath, String value, long timestamp) {
+
+  @Override public void emptyBuffer() {
+
+  }
+
+
+
+  @Override public void appendToBuffer(String metricPath, String value, long timestamp) {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();
@@ -96,7 +104,7 @@ public class GraphiteAdapter {
     }
   }
 
-  public void flushSendBuffer() throws IOException {
+  @Override public void sendBufferContents() throws IOException {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();
@@ -119,7 +127,7 @@ public class GraphiteAdapter {
         this.disconnect();
         this.connect();
       }
-      catch (GraphiteConnectionAttemptFailure cf) {
+      catch (GraphiteConnectionFailureException cf) {
         //Do nothing, error already logged in connect()
       }
     }
@@ -139,7 +147,7 @@ public class GraphiteAdapter {
    *
    * @return the number of failed writes to the Graphite server
    */
-  public int getFailures() {
+  @Override public int getFailures() {
     return graphite.getFailures();
   }
 

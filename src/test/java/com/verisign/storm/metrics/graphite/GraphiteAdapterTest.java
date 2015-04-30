@@ -15,6 +15,7 @@
 package com.verisign.storm.metrics.graphite;
 
 import com.google.common.base.Charsets;
+import com.verisign.storm.metrics.adapters.GraphiteAdapter;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -54,7 +55,7 @@ public class GraphiteAdapterTest {
     graphiteServer.configureBlocking(false);
   }
 
-  private void launchGraphiteClient() throws GraphiteConnectionAttemptFailure {
+  private void launchGraphiteClient() throws GraphiteConnectionFailureException {
     testAdapter = new GraphiteAdapter(graphiteSocketAddress);
     testAdapter.connect();
   }
@@ -87,8 +88,8 @@ public class GraphiteAdapterTest {
     // Given a tuple representing a (metricPath, value, timestamp) metric (injected via data provider)
 
     // When the adapter sends the metric
-    testAdapter.appendToSendBuffer(metricPath, value, timestamp);
-    testAdapter.flushSendBuffer();
+    testAdapter.appendToBuffer(metricPath, value, timestamp);
+    testAdapter.sendBufferContents();
 
     // Then the server should receive a properly formatted string representing the metric
     ByteBuffer receive = ByteBuffer.allocate(1024);
