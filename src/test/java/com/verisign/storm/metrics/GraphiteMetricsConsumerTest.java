@@ -14,7 +14,6 @@
  */
 package com.verisign.storm.metrics;
 
-import backtype.storm.metric.api.IMetricsConsumer;
 import backtype.storm.metric.api.IMetricsConsumer.DataPoint;
 import backtype.storm.metric.api.IMetricsConsumer.TaskInfo;
 import backtype.storm.task.IErrorReporter;
@@ -69,8 +68,6 @@ public class GraphiteMetricsConsumerTest {
 
     // Then the reporter should point at the right Graphite server with the proper configuration
     verify(topologyContext).getStormId();
-    assertThat(consumer.getGraphiteHost()).isEqualTo(testGraphiteHost);
-    assertThat(consumer.getGraphitePort()).isEqualTo(Integer.parseInt(testGraphitePort));
     assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
   }
@@ -113,7 +110,7 @@ public class GraphiteMetricsConsumerTest {
         String expMetricPath = getExpectedMetricPath(dp, key);
         String expValue = datamap.get(key).toString();
         long expTimestamp = taskInfo.timestamp;
-        verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
+        verify(consumer).appendToBuffer(expMetricPath, expValue, expTimestamp);
       }
     }
   }
@@ -168,7 +165,7 @@ public class GraphiteMetricsConsumerTest {
         String expMetricPath = getExpectedMetricPath(dp, key);
         String expValue = datamap.get(key).toString();
         long expTimestamp = taskInfo.timestamp;
-        verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
+        verify(consumer).appendToBuffer(expMetricPath, expValue, expTimestamp);
       }
     }
   }
@@ -213,7 +210,7 @@ public class GraphiteMetricsConsumerTest {
 
         String expValue = String.format("%.2f", datamap.get(key));
         long expTimestamp = taskInfo.timestamp;
-        verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
+        verify(consumer).appendToBuffer(expMetricPath, expValue, expTimestamp);
       }
     }
   }
@@ -257,8 +254,8 @@ public class GraphiteMetricsConsumerTest {
         String expMetricPath = getExpectedMetricPath(dp, key);
         String expValue = String.format("%.2f", datamap.get(key));
         long expTimestamp = taskInfo.timestamp;
-        
-        verify(consumer).sendToGraphite(expMetricPath, expValue, expTimestamp);
+
+        verify(consumer).appendToBuffer(expMetricPath, expValue, expTimestamp);
       }
     }
   }

@@ -22,32 +22,67 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 /**
  * This class is a wrapper for the Graphite class in the Metrics library.  It encapsulates the handling of errors that
  * may occur during network communication with Graphite/Carbon.
  */
-public class GraphiteAdapter implements IAdapter {
+public class GraphiteAdapter extends AbstractAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteAdapter.class);
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
+  public static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
+  public static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
+  public static final String GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION
+      = "metrics.graphite.min-connect-attempt-interval-secs";
+
+
+  private String graphiteHost;
+  private int graphitePort;
+  private InetSocketAddress graphiteSocketAddr;
+  
   private final String serverFingerprint;
   private final int minConnectAttemptIntervalSecs;
   private final Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
-  public GraphiteAdapter(InetSocketAddress server) {
-    this(server, DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS);
+  public static AbstractAdapter newAdapter(Map conf) {
+    return new GraphiteAdapter(conf);
+    
   }
 
-  public GraphiteAdapter(InetSocketAddress server, int minConnectAttemptIntervalSecs) {
-    if (server == null) {
-      throw new IllegalArgumentException("server address must not be null");
+  public GraphiteAdapter(Map conf) {
+    super(conf);
+
+    if (conf.containsKey(GRAPHITE_HOST_OPTION)) {
+      graphiteHost = (String) conf.get(GRAPHITE_HOST_OPTION);
     }
-    serverFingerprint = server.getAddress() + ":" + server.getPort();
-    this.minConnectAttemptIntervalSecs = minConnectAttemptIntervalSecs;
-    this.graphite = new Graphite(server);
+    else {
+      throw new IllegalArgumentException("Field " + GRAPHITE_HOST_OPTION + " required.");
+    }
+
+    if (conf.containsKey(GRAPHITE_PORT_OPTION)) {
+      graphitePort = Integer.parseInt((String) conf.get(GRAPHITE_PORT_OPTION));
+    }
+    else {
+      throw new IllegalArgumentException("Field " + GRAPHITE_PORT_OPTION + " required.");
+    }
+
+    if (conf.containsKey(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION)) {
+      minConnectAttemptIntervalSecs = Integer
+          .parseInt((String) conf.get(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION));
+    }
+    else {
+      minConnectAttemptIntervalSecs = DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS;
+    }
+
+    graphiteSocketAddr = new InetSocketAddress(graphiteHost, graphitePort);
+
+    serverFingerprint = graphiteSocketAddr.getAddress() + ":" + graphiteSocketAddr.getPort();
+    this.graphite = new Graphite(graphiteSocketAddr);
     lastConnectAttemptTimestampMs = 0;
+
   }
 
   @Override public String getServerFingerprint() {
@@ -84,7 +119,7 @@ public class GraphiteAdapter implements IAdapter {
 
 
   @Override public void emptyBuffer() {
-
+    return;
   }
 
 

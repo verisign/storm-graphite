@@ -27,12 +27,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
 public class GraphiteAdapterTest {
 
   private ServerSocketChannel graphiteServer;
+  private String graphiteHost;
+  private Integer graphitePort;
   private InetSocketAddress graphiteSocketAddress;
   private GraphiteAdapter testAdapter;
   private SocketChannel socketChannel;
@@ -47,16 +50,22 @@ public class GraphiteAdapterTest {
   }
 
   private void launchGraphiteServer() throws IOException {
-    String ANY_GRAPHITE_HOST = "127.0.0.1";
-    int ANY_GRAPHITE_PORT = 2003;
-    graphiteSocketAddress = new InetSocketAddress(ANY_GRAPHITE_HOST, ANY_GRAPHITE_PORT);
+    graphiteHost = "127.0.0.1";
+    graphitePort = 2003;
+
+    graphiteSocketAddress = new InetSocketAddress(graphiteHost, graphitePort);
     graphiteServer = ServerSocketChannel.open();
     graphiteServer.socket().bind(graphiteSocketAddress);
     graphiteServer.configureBlocking(false);
   }
 
   private void launchGraphiteClient() throws GraphiteConnectionFailureException {
-    testAdapter = new GraphiteAdapter(graphiteSocketAddress);
+    HashMap<String, String> config = new HashMap<String, String>();
+
+    config.put(GraphiteAdapter.GRAPHITE_HOST_OPTION, graphiteHost);
+    config.put(GraphiteAdapter.GRAPHITE_PORT_OPTION, graphitePort.toString());
+
+    testAdapter = new GraphiteAdapter(config);
     testAdapter.connect();
   }
 
@@ -97,10 +106,4 @@ public class GraphiteAdapterTest {
     String actualMessageReceived = new String(receive.array(), 0, bytesRead, DEFAULT_CHARSET);
     assertThat(actualMessageReceived).isEqualTo(expectedMessageReceived);
   }
-
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void shouldThrowIAEWhenServerParameterIsNull() {
-    new GraphiteAdapter(null);
-  }
-
 }
