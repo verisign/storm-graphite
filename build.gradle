@@ -9,6 +9,7 @@ buildscript {
     // https://github.com/kt3k/coveralls-gradle-plugin
     classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.3.1'
     classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.0'
+    classpath 'com.commercehub.gradle.plugin:gradle-avro-plugin:0.3.4'
   }
 }
 
@@ -24,6 +25,7 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'os-package'
+apply plugin: 'com.commercehub.gradle.plugin.avro'
 
 // Helper functions for RPM metadata
 def shortCommit = "git rev-parse --short HEAD".execute().in.text.trim()
@@ -76,6 +78,11 @@ dependencies {
     ['com.google.guava:guava:17.0'],
     ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
     ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
+      ["com.twitter:bijection-core_2.10:0.7.0"],
+      ["com.twitter:bijection-avro_2.10:0.7.0"],
+      ["com.twitter:util-core_2.10:6.1.0"],
+      ["org.apache.kafka:kafka_2.10:0.8.2.0"],
+      ["org.apache.avro:avro:1.7.6"],
   )
 
   testCompile(

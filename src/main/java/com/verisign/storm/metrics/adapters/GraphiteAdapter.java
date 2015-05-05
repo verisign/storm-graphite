@@ -124,12 +124,21 @@ public class GraphiteAdapter extends AbstractAdapter {
 
 
 
-  @Override public void appendToBuffer(String metricPath, String value, long timestamp) {
+  @Override public void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();
       }
-      graphite.send(metricPath, value, timestamp);
+
+      for (String key : metrics.keySet()) {
+        if (metrics.get(key) instanceof String) {
+          graphite.send(prefix + "." + key, (String) metrics.get(key), timestamp);
+        }
+        else {
+          graphite.send(prefix + "." + key, metrics.get(key).toString(), timestamp);
+        }
+
+      }
     }
     catch (IOException e) {
       handleFailedSend(e);

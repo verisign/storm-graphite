@@ -14,7 +14,7 @@ public abstract class AbstractAdapter {
 
   public abstract void disconnect() throws GraphiteConnectionFailureException;
 
-  public abstract void appendToBuffer(String metricPath, String value, long timestamp);
+  public abstract void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp);
 
   public abstract void emptyBuffer();
 

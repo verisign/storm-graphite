@@ -1,0 +1,26 @@
+{
+  "type": "record",
+  "name": "GraphingMetrics",
+  "namespace": "com.verisign.ie.styx.avro.graphingMetrics",
+  "doc": "Metrics intended for graphing applications; essentially a container for key-value numerical data.",
+  "fields": [
+    {
+      "name": "prefix",
+      "type": "string",
+      "doc": "A prefix meant to convey information about the metricValues data."
+    },
+    {
+      "name": "reportTime",
+      "type": "long",
+      "doc": "Seconds since Unix epoch when the report was made."
+    },
+    {
+      "name": "metricValues",
+      "doc": "Assortment of arbitrary key-value data pairs.",
+      "type": {
+        "type": "map",
+        "values": "double"
+      }
+    }
+  ]
+}

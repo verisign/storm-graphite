@@ -19,7 +19,6 @@ import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
 import com.verisign.storm.metrics.adapters.AbstractAdapter;
-import com.verisign.storm.metrics.graphite.GraphiteCodec;
 import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,17 +134,22 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       if (dataPoint.value instanceof Map) {
         Map<String, Object> m = (Map<String, Object>) dataPoint.value;
         if (!m.isEmpty()) {
-          for (String key : m.keySet()) {
-            String value = GraphiteCodec.format(m.get(key));
-            String metricPath = metricPrefix.concat(dataPoint.name).concat(".").concat(key);
-            appendToBuffer(metricPath, value, taskInfo.timestamp);
-          }
+          appendToBuffer(metricPrefix, m, taskInfo.timestamp);
+          //          for (String key : m.keySet()) {
+          //            String value = GraphiteCodec.format(m.get(key));
+          //            String metricPath = metricPrefix.concat(dataPoint.name).concat(".").concat(key);
+          //            appendToBuffer(metricPath, value, taskInfo.timestamp);
+          //          }
         }
       }
       else {
-        String value = GraphiteCodec.format(dataPoint.value);
-        String metricPath = metricPrefix.concat(".").concat(dataPoint.name).concat(".value");
-        appendToBuffer(metricPath, value, taskInfo.timestamp);
+        HashMap<String, Object> metric = new HashMap<String, Object>();
+        metric.put(dataPoint.name + "value", dataPoint.value);
+        appendToBuffer(metricPrefix, metric, taskInfo.timestamp);
+
+        //        String value = GraphiteCodec.format(dataPoint.value);
+        //        String metricPath = metricPrefix.concat(".").concat(dataPoint.name).concat(".value");
+        //        appendToBuffer(metricPath, value, taskInfo.timestamp);
 
       }
     }
@@ -190,9 +194,9 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
   }
 
-  protected void appendToBuffer(String metricPath, String value, long timestamp) {
+  protected void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
     if (adapter != null) {
-      adapter.appendToBuffer(metricPath, value, timestamp);
+      adapter.appendToBuffer(prefix, metrics, timestamp);
     }
   }
 
