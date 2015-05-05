@@ -16,6 +16,7 @@ package com.verisign.storm.metrics.adapters;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
+import com.verisign.storm.metrics.graphite.GraphiteCodec;
 import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class GraphiteAdapter extends AbstractAdapter {
   private String graphiteHost;
   private int graphitePort;
   private InetSocketAddress graphiteSocketAddr;
-  
+
   private final String serverFingerprint;
   private final int minConnectAttemptIntervalSecs;
   private final Graphite graphite;
@@ -49,7 +50,7 @@ public class GraphiteAdapter extends AbstractAdapter {
 
   public static AbstractAdapter newAdapter(Map conf) {
     return new GraphiteAdapter(conf);
-    
+
   }
 
   public GraphiteAdapter(Map<String, Object> conf) {
@@ -131,13 +132,7 @@ public class GraphiteAdapter extends AbstractAdapter {
       }
 
       for (String key : metrics.keySet()) {
-        if (metrics.get(key) instanceof String) {
-          graphite.send(prefix + "." + key, (String) metrics.get(key), timestamp);
-        }
-        else {
-          graphite.send(prefix + "." + key, metrics.get(key).toString(), timestamp);
-        }
-
+        graphite.send(prefix + "." + key, GraphiteCodec.format(metrics.get(key)), timestamp);
       }
     }
     catch (IOException e) {
@@ -145,6 +140,9 @@ public class GraphiteAdapter extends AbstractAdapter {
     }
     catch (NullPointerException npe) {
       handleFailedSend(npe);
+    }
+    catch (NumberFormatException nfe) {
+      handleFailedSend(nfe);
     }
   }
 

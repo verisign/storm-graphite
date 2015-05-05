@@ -47,6 +47,9 @@ public class GraphiteCodec {
     else if (o instanceof Long) {
       return format(((Long) o).longValue());
     }
+    else if (o instanceof String) {
+      return format(Double.parseDouble((String) o));
+    }
     return null;
   }
 

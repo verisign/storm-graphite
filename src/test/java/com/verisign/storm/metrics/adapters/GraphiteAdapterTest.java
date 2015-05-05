@@ -12,10 +12,10 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.graphite;
+package com.verisign.storm.metrics.adapters;
 
 import com.google.common.base.Charsets;
-import com.verisign.storm.metrics.adapters.GraphiteAdapter;
+import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -60,7 +60,7 @@ public class GraphiteAdapterTest {
   }
 
   private void launchGraphiteClient() throws GraphiteConnectionFailureException {
-    HashMap<String, String> config = new HashMap<String, String>();
+    HashMap<String, Object> config = new HashMap<String, Object>();
 
     config.put(GraphiteAdapter.GRAPHITE_HOST_OPTION, graphiteHost);
     config.put(GraphiteAdapter.GRAPHITE_PORT_OPTION, graphitePort.toString());
@@ -83,21 +83,28 @@ public class GraphiteAdapterTest {
 
   @DataProvider(name = "metrics")
   public Object[][] metricsProvider() {
-    return new Object[][] { new Object[] { "test.storm.metric1", "1.00", new Long("1408393534971"),
+    return new Object[][] { new Object[] { "test.storm", "metric1", "1.00", new Long("1408393534971"),
         "test.storm.metric1 1.00 1408393534971\n" },
-        new Object[] { "test.storm.metric2", "0.00", new Long("1408393534971"),
+        new Object[] { "test.storm", "metric2", "0.00", new Long("1408393534971"),
             "test.storm.metric2 0.00 1408393534971\n" },
-        new Object[] { "test.storm.metric3", "3.14", new Long("1408393534971"),
-            "test.storm.metric3 3.14 1408393534971\n" } };
+        new Object[] { "test.storm", "metric3", "3.14", new Long("1408393534971"),
+            "test.storm.metric3 3.14 1408393534971\n" },
+        new Object[] { "test.storm", "metric3", "99", new Long("1408393534971"),
+            "test.storm.metric3 99.00 1408393534971\n" },
+        new Object[] { "test.storm", "metric3", "1e3", new Long("1408393534971"),
+            "test.storm.metric3 1000.00 1408393534971\n" } };
   }
 
   @Test(dataProvider = "metrics")
-  public void sendMetricTupleAsFormattedStringToGraphiteServer(String metricPath, String value, long timestamp,
+  public void sendMetricTupleAsFormattedStringToGraphiteServer(String metricPrefix, String metricKey, String value,
+      long timestamp,
       String expectedMessageReceived) throws IOException {
     // Given a tuple representing a (metricPath, value, timestamp) metric (injected via data provider)
 
+    HashMap<String, Object> values = new HashMap<String, Object>();
+    values.put(metricKey, value);
     // When the adapter sends the metric
-    testAdapter.appendToBuffer(metricPath, value, timestamp);
+    testAdapter.appendToBuffer(metricPrefix, values, timestamp);
     testAdapter.sendBufferContents();
 
     // Then the server should receive a properly formatted string representing the metric
