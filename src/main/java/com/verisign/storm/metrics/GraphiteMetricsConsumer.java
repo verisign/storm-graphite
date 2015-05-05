@@ -65,6 +65,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   private static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
   private static final String REPORTER_NAME = "metrics.reporter.name";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
+  private static final String DEFAULT_PREFIX = "metrics";
 
   private String graphitePrefix;
   private String stormId;
@@ -92,6 +93,9 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     if (reporterConfig.containsKey(GRAPHITE_PREFIX_OPTION)) {
       graphitePrefix = (String) reporterConfig.get(GRAPHITE_PREFIX_OPTION);
     }
+    else {
+      graphitePrefix = DEFAULT_PREFIX;
+    }
 
     try {
       adapter = configureReporter(reporterConfig);
@@ -117,7 +121,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   @Override @SuppressWarnings("unchecked")
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
-    //    adapter.emptyBuffer();
+    emptyBuffer();
     String metricPrefix = constructMetricPrefix(graphitePrefix, taskInfo);
 
     for (DataPoint dataPoint : dataPoints) {
@@ -135,22 +139,12 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         Map<String, Object> m = (Map<String, Object>) dataPoint.value;
         if (!m.isEmpty()) {
           appendToBuffer(metricPrefix, m, taskInfo.timestamp);
-          //          for (String key : m.keySet()) {
-          //            String value = GraphiteCodec.format(m.get(key));
-          //            String metricPath = metricPrefix.concat(dataPoint.name).concat(".").concat(key);
-          //            appendToBuffer(metricPath, value, taskInfo.timestamp);
-          //          }
         }
       }
       else {
         HashMap<String, Object> metric = new HashMap<String, Object>();
         metric.put(dataPoint.name + "value", dataPoint.value);
         appendToBuffer(metricPrefix, metric, taskInfo.timestamp);
-
-        //        String value = GraphiteCodec.format(dataPoint.value);
-        //        String metricPath = metricPrefix.concat(".").concat(dataPoint.name).concat(".value");
-        //        appendToBuffer(metricPath, value, taskInfo.timestamp);
-
       }
     }
     sendMetrics();
@@ -198,6 +192,10 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     if (adapter != null) {
       adapter.appendToBuffer(prefix, metrics, timestamp);
     }
+  }
+
+  protected void emptyBuffer() {
+    adapter.emptyBuffer();
   }
 
   protected void sendMetrics() {

@@ -7,7 +7,7 @@ import java.util.Map;
 
 public abstract class AbstractAdapter {
 
-  public AbstractAdapter(Map conf) {
+  public AbstractAdapter(Map<String, Object> conf) {
   }
 
   public abstract void connect() throws GraphiteConnectionFailureException;

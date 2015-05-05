@@ -1,6 +1,8 @@
 package com.verisign.storm.metrics.adapters;
 
+import com.google.common.base.Throwables;
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
+import com.verisign.storm.metrics.graphite.GraphiteCodec;
 import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
@@ -22,34 +24,36 @@ import java.util.Properties;
 public class KafkaAdapter extends AbstractAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaAdapter.class);
-  public static final String KAFKA_TOPIC_NAME = "metrics.kafka.topic";
-  public static final String KAFKA_BROKER_LIST = "metadata.broker.list";
+  public static final String KAFKA_TOPIC_NAME_FIELD = "metrics.kafka.topic";
+  public static final String KAFKA_BROKER_LIST_FIELD = "metadata.broker.list";
 
   private String kafkaTopicName;
+  private String kafkaBrokerList;
   private LinkedList<GraphingMetrics> buffer;
 
-  //KafkaProd
   private Producer<String, byte[]> kafkaProducer;
   DatumWriter<GraphingMetrics> datumWriter;
 
-
-  @SuppressWarnings("unchecked")
+  private int failures;
+  
   public KafkaAdapter(Map conf) {
     super(conf);
 
-    if (conf.containsKey(KAFKA_TOPIC_NAME)) {
-      kafkaTopicName = (String) conf.get(KAFKA_TOPIC_NAME);
+    if (conf.containsKey(KAFKA_TOPIC_NAME_FIELD)) {
+      kafkaTopicName = (String) conf.get(KAFKA_TOPIC_NAME_FIELD);
     }
     else {
-      throw new IllegalArgumentException("Field " + KAFKA_TOPIC_NAME + " required.");
+      throw new IllegalArgumentException("Field " + KAFKA_TOPIC_NAME_FIELD + " required.");
     }
 
-    if (!conf.containsKey(KAFKA_BROKER_LIST)) {
-      throw new IllegalArgumentException("Field " + KAFKA_BROKER_LIST + " required.");
+    if (conf.containsKey(KAFKA_BROKER_LIST_FIELD)) {
+      kafkaBrokerList = (String) conf.get(KAFKA_BROKER_LIST_FIELD);
+    }
+    else {
+      throw new IllegalArgumentException("Field " + KAFKA_BROKER_LIST_FIELD + " required.");
     }
 
     Properties producerProps = new Properties();
-
     for (String key : ((Map<String, Object>) conf).keySet()) {
       producerProps.setProperty(key, (String) conf.get(key));
     }
@@ -57,6 +61,7 @@ public class KafkaAdapter extends AbstractAdapter {
     kafkaProducer = new Producer<String, byte[]>(new ProducerConfig(producerProps));
     datumWriter = new SpecificDatumWriter<GraphingMetrics>(GraphingMetrics.class);
     buffer = new LinkedList<GraphingMetrics>();
+    failures = 0;
   }
 
   @Override public void connect() throws GraphiteConnectionFailureException {
@@ -71,17 +76,13 @@ public class KafkaAdapter extends AbstractAdapter {
     Map<String, Double> metricsDoubleMap = new HashMap<String, Double>();
 
     for (String key : metrics.keySet()) {
-      if (metrics.get(key) instanceof String) {
-        try {
-          Double value = Double.parseDouble((String) metrics.get(key));
-          metricsDoubleMap.put(key, value);
-        }
-        catch (NumberFormatException e) {
-          //Error out
-        }
+      try {
+        Double value = Double.parseDouble(GraphiteCodec.format(metrics.get(key)));
+        metricsDoubleMap.put(key, value);
       }
-      else {
-        //Error out 
+      catch (NumberFormatException e) {
+        String trace = Throwables.getStackTraceAsString(e);
+        LOG.error("Error parsing metric value {} in path {}: {}", metrics.get(key), prefix + key, trace);
       }
     }
 
@@ -94,11 +95,18 @@ public class KafkaAdapter extends AbstractAdapter {
 
   @Override public void sendBufferContents() throws IOException {
     for (GraphingMetrics metric : buffer) {
+      try {
+        byte[] metricBytes = convertGraphingMetricAvroObjectToByteArray(metric);
+        KeyedMessage<String, byte[]> message = new KeyedMessage<String, byte[]>(kafkaTopicName, metric.getPrefix(),
+            metricBytes);
+        kafkaProducer.send(message);
+      }
+      catch (IOException e) {
+        failures++;
 
-      byte[] metricBytes = convertGraphingMetricAvroObjectToByteArray(metric);
-      KeyedMessage<String, byte[]> message = new KeyedMessage<String, byte[]>(kafkaTopicName, metric.getPrefix(),
-          metricBytes);
-      kafkaProducer.send(message);
+        //Pass this exception up to the metrics consumer for it to handle
+        throw e;
+      }
     }
   }
 
@@ -111,10 +119,10 @@ public class KafkaAdapter extends AbstractAdapter {
   }
 
   @Override public int getFailures() {
-    return 0;
+    return failures;
   }
 
   @Override public String getServerFingerprint() {
-    return null;
+    return kafkaBrokerList;
   }
 }

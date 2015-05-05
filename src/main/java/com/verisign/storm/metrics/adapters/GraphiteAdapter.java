@@ -52,7 +52,7 @@ public class GraphiteAdapter extends AbstractAdapter {
     
   }
 
-  public GraphiteAdapter(Map conf) {
+  public GraphiteAdapter(Map<String, Object> conf) {
     super(conf);
 
     if (conf.containsKey(GRAPHITE_HOST_OPTION)) {
