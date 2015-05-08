@@ -30,7 +30,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 
 public class KafkaAdapterTest {
-  private static final int TEST_COUNT = 50;
+  private static final int TEST_COUNT = 10;
   private static final Logger LOG = LoggerFactory.getLogger(KafkaAdapterTest.class);
 
   private static final Integer ZOOKEEPER_PORT = 2181;
@@ -41,7 +41,7 @@ public class KafkaAdapterTest {
   private static final String KAFKA_BROKER_LIST = KAFKA_HOST + ":" + KAFKA_PORT;
   private static final String KAFKA_TOPIC = "testTopic";
 
-  KafkaServerStartable kafka;
+  KafkaServerStartable kafkaServer;
   TestingServer zookeeper;
   KafkaAdapter kafkaAdapter;
   SimpleConsumer kafkaConsumer;
@@ -68,7 +68,6 @@ public class KafkaAdapterTest {
     kafkaAdapter = new KafkaAdapter(config);
     kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "client1");
 
-    //Zookeeper setup
     try {
       zookeeper = new TestingServer(ZOOKEEPER_PORT);
     }
@@ -76,22 +75,10 @@ public class KafkaAdapterTest {
       LOG.error(e.getMessage());
     }
 
-    //Kafka broker setup
     KafkaConfig kafkaConfig = new KafkaConfig(getBrokerConfig());
-    kafka = new KafkaServerStartable(kafkaConfig);
-    kafka.startup();
+    kafkaServer = new KafkaServerStartable(kafkaConfig);
+    kafkaServer.startup();
   }
-
-  @AfterClass private void exitCluster() {
-    kafka.shutdown();
-    try {
-      zookeeper.close();
-    }
-    catch (IOException e) {
-      LOG.error(e.getMessage());
-    }
-  }
-
 
   @DataProvider(name = "metrics") public Object[][] metricsProvider() {
     Random rng = new Random(System.currentTimeMillis());
@@ -121,41 +108,43 @@ public class KafkaAdapterTest {
     return testData;
   }
 
-
   @Test(dataProvider = "metrics")
-  public void kafkaBrokerTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
+  public void kafkaAdapterTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
       long timestamp) {
-    //Sending Avro encoded metric to Kafka
+    
+    /* GIVEN: A Zookeeper instance, a Kafka broker, and a the Kafka adapter we're testing */
+    
+    /* WHEN: A new metric is appended to the adapter's buffer and we tell the adapter to send its data */
     HashMap<String, Object> metrics = new HashMap<String, Object>();
     metrics.put(metricKey, value);
 
     kafkaAdapter.appendToBuffer(metricPrefix, metrics, timestamp);
     try {
       kafkaAdapter.sendBufferContents();
-      Thread.sleep(50);
+
+      // Allow the Kafka server time to commit into its log the message we sent it
+      Thread.sleep(50); 
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
     catch (InterruptedException e) {
-
     }
 
-    //Consumer setup
+    /* WHEN: A Kafka consumer reads the latest message from the same topic on the Kafka server*/
     FetchRequest fetchRequest = new FetchRequestBuilder().addFetch(KAFKA_TOPIC, 0, 0, 1000000).build();
     FetchResponse response = kafkaConsumer.fetch(fetchRequest);
 
-    //Reading Avro encoded metric from Kafka
     GraphingMetrics result = null;
     Iterator<MessageAndOffset> messageSetItr = response.messageSet(KAFKA_TOPIC, 0).iterator();
 
-    //Fast forward to the latest offset
+    // Fast forward to the message at the latest offset in the topic
     MessageAndOffset latestMessage = null;
     while (messageSetItr.hasNext()) {
       latestMessage = messageSetItr.next();
     }
 
-    //Decode the message payload back into our schema object
+    /* WHEN: The latest message is decoded using the supplied Avro schema */
     ByteBuffer payload = latestMessage.message().payload();
     byte[] bytes = new byte[payload.limit()];
     payload.get(bytes);
@@ -167,9 +156,20 @@ public class KafkaAdapterTest {
       fail("Failed to deserialize message:" + e.getMessage());
     }
 
+    /* THEN: The field values of the decoded record should be the same as those of the input fields. */
     assertThat(result.getPrefix()).isEqualTo(metricPrefix);
     assertThat(result.getReportTime()).isEqualTo(timestamp);
     assertThat(result.getMetricValues().get(metricKey)).isEqualTo(truncatedValue);
+  }
+
+  @AfterClass private void exitCluster() {
+    kafkaServer.shutdown();
+    try {
+      zookeeper.close();
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
   }
 
   private <T extends SpecificRecordBase> T deserialize(byte[] bytes, Schema schema) throws IOException {
