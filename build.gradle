@@ -74,10 +74,11 @@ repositories {
 dependencies {
 
   compile(
-    ['org.apache.storm:storm-core:0.9.3'],
-    ['com.google.guava:guava:17.0'],
-    ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
-    ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
+      ['org.apache.curator:curator-test:2.6.0'],
+      ['org.apache.curator:curator-framework:2.6.0'],
+      ['com.google.guava:guava:17.0'],
+      ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
+      ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
       ["com.twitter:bijection-core_2.10:0.7.0"],
       ["com.twitter:bijection-avro_2.10:0.7.0"],
       ["com.twitter:util-core_2.10:6.1.0"],
@@ -85,14 +86,20 @@ dependencies {
       ["org.apache.avro:avro:1.7.6"],
   )
 
+  compile(
+      ['org.apache.storm:storm-core:0.9.3'],
+  ) {
+    exclude module: 'log4j-over-slf4j'
+  }
+
   testCompile(
-    ['org.uncommons:reportng:1.1.4'],
-    ['org.mockito:mockito-all:1.9.5'],
-    ['org.easytesting:fest-assert-core:2.0M10'],
-    ['org.testng:testng:6.8.8'],
-    // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
-    // (Gradle will fail to run tests otherwise.)
-    ['com.google.inject:guice:3.0']
+      ['org.uncommons:reportng:1.1.4'],
+      ['org.mockito:mockito-all:1.9.5'],
+      ['org.easytesting:fest-assert-core:2.0M10'],
+      ['org.testng:testng:6.8.8'],
+      // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
+      // (Gradle will fail to run tests otherwise.)
+      ['com.google.inject:guice:3.0']
   )
 
 }
