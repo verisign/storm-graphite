@@ -89,6 +89,7 @@ dependencies {
   compile(
       ['org.apache.storm:storm-core:0.9.3'],
   ) {
+    // The log4j-over-slf4j dependency conflicts with slf4j-log4j12
     exclude module: 'log4j-over-slf4j'
   }
 
