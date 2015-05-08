@@ -7,10 +7,11 @@ import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.Schema;
+import org.apache.avro.io.*;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,6 @@ public class KafkaAdapter extends AbstractAdapter {
   private LinkedList<GraphingMetrics> buffer;
 
   private Producer<String, byte[]> kafkaProducer;
-  DatumWriter<GraphingMetrics> datumWriter;
 
   private int failures;
   
@@ -59,7 +59,6 @@ public class KafkaAdapter extends AbstractAdapter {
     }
 
     kafkaProducer = new Producer<String, byte[]>(new ProducerConfig(producerProps));
-    datumWriter = new SpecificDatumWriter<GraphingMetrics>(GraphingMetrics.class);
     buffer = new LinkedList<GraphingMetrics>();
     failures = 0;
   }
@@ -96,10 +95,8 @@ public class KafkaAdapter extends AbstractAdapter {
   @Override public void sendBufferContents() throws IOException {
     for (GraphingMetrics metric : buffer) {
       try {
-        byte[] metricBytes = convertGraphingMetricAvroObjectToByteArray(metric);
-        KeyedMessage<String, byte[]> message = new KeyedMessage<String, byte[]>(kafkaTopicName, metric.getPrefix(),
-            metricBytes);
-        kafkaProducer.send(message);
+        byte[] metricBytes = serialize(metric);
+        kafkaProducer.send(new KeyedMessage<String, byte[]>(kafkaTopicName, metricBytes));
       }
       catch (IOException e) {
         failures++;
@@ -110,19 +107,29 @@ public class KafkaAdapter extends AbstractAdapter {
     }
   }
 
-  private byte[] convertGraphingMetricAvroObjectToByteArray(GraphingMetrics graphingMetrics) throws IOException {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(stream, null);
-    datumWriter.write(graphingMetrics, encoder);
-    encoder.flush();
-    return stream.toByteArray();
-  }
-
   @Override public int getFailures() {
     return failures;
   }
 
   @Override public String getServerFingerprint() {
     return kafkaBrokerList;
+  }
+
+
+  private <T extends SpecificRecordBase> byte[] serialize(T record) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+
+    DatumWriter<T> writer = new SpecificDatumWriter<T>(record.getSchema());
+    writer.write(record, encoder);
+    encoder.flush();
+    out.close();
+    return out.toByteArray();
+  }
+
+  private <T extends SpecificRecordBase> T deserialize(byte[] bytes, Schema schema) throws IOException {
+    SpecificDatumReader<T> reader = new SpecificDatumReader<T>(schema);
+    Decoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
+    return reader.read(null, decoder);
   }
 }
