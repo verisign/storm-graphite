@@ -12,7 +12,7 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.adapters;
+package com.verisign.storm.metrics.reporters;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
@@ -29,9 +29,9 @@ import java.util.Map;
  * This class is a wrapper for the Graphite class in the Metrics library.  It encapsulates the handling of errors that
  * may occur during network communication with Graphite/Carbon.
  */
-public class GraphiteAdapter extends AbstractAdapter {
+public class GraphiteReporter extends AbstractReporter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GraphiteAdapter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GraphiteReporter.class);
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
   public static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
   public static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
@@ -48,12 +48,12 @@ public class GraphiteAdapter extends AbstractAdapter {
   private final Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
-  public static AbstractAdapter newAdapter(Map conf) {
-    return new GraphiteAdapter(conf);
+  public static AbstractReporter newAdapter(Map conf) {
+    return new GraphiteReporter(conf);
 
   }
 
-  public GraphiteAdapter(Map<String, Object> conf) {
+  public GraphiteReporter(Map<String, Object> conf) {
     super(conf);
 
     if (conf.containsKey(GRAPHITE_HOST_OPTION)) {

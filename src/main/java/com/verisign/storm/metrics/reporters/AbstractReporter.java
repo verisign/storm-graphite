@@ -1,13 +1,13 @@
-package com.verisign.storm.metrics.adapters;
+package com.verisign.storm.metrics.reporters;
 
 import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 
 import java.io.IOException;
 import java.util.Map;
 
-public abstract class AbstractAdapter {
+public abstract class AbstractReporter {
 
-  public AbstractAdapter(Map<String, Object> conf) {
+  public AbstractReporter(Map<String, Object> conf) {
   }
 
   public abstract void connect() throws GraphiteConnectionFailureException;

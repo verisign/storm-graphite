@@ -1,4 +1,18 @@
-package com.verisign.storm.metrics.adapters;
+/*
+ * Copyright 2014 VeriSign, Inc.
+ *
+ * VeriSign licenses this file to you under the Apache License, version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ *
+ * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
+ */
+package com.verisign.storm.metrics.reporters;
 
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
 import kafka.api.FetchRequest;
@@ -29,9 +43,9 @@ import java.util.*;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 
-public class KafkaAdapterTest {
+public class KafkaReporterTest {
   private static final int TEST_COUNT = 10;
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaAdapterTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaReporterTest.class);
 
   private static final Integer ZOOKEEPER_PORT = 2181;
   private static final String ZOOKEEPER_HOST = "127.0.0.1";
@@ -43,7 +57,7 @@ public class KafkaAdapterTest {
 
   KafkaServerStartable kafkaServer;
   TestingServer zookeeper;
-  KafkaAdapter kafkaAdapter;
+  KafkaReporter kafkaAdapter;
   SimpleConsumer kafkaConsumer;
 
 
@@ -62,10 +76,10 @@ public class KafkaAdapterTest {
 
   @BeforeClass private void initializeCluster() {
     HashMap<String, Object> config = new HashMap<String, Object>();
-    config.put(KafkaAdapter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
-    config.put(KafkaAdapter.KAFKA_TOPIC_NAME_FIELD, KAFKA_TOPIC);
+    config.put(KafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
+    config.put(KafkaReporter.KAFKA_TOPIC_NAME_FIELD, KAFKA_TOPIC);
 
-    kafkaAdapter = new KafkaAdapter(config);
+    kafkaAdapter = new KafkaReporter(config);
     kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "client1");
 
     try {

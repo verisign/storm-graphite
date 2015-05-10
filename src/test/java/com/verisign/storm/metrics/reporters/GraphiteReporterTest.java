@@ -12,7 +12,7 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.adapters;
+package com.verisign.storm.metrics.reporters;
 
 import com.google.common.base.Charsets;
 import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
@@ -31,13 +31,13 @@ import java.util.HashMap;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
-public class GraphiteAdapterTest {
+public class GraphiteReporterTest {
 
   private ServerSocketChannel graphiteServer;
   private String graphiteHost;
   private Integer graphitePort;
   private InetSocketAddress graphiteSocketAddress;
-  private GraphiteAdapter testAdapter;
+  private GraphiteReporter testAdapter;
   private SocketChannel socketChannel;
 
   private final Charset DEFAULT_CHARSET = Charsets.UTF_8;
@@ -62,10 +62,10 @@ public class GraphiteAdapterTest {
   private void launchGraphiteClient() throws GraphiteConnectionFailureException {
     HashMap<String, Object> config = new HashMap<String, Object>();
 
-    config.put(GraphiteAdapter.GRAPHITE_HOST_OPTION, graphiteHost);
-    config.put(GraphiteAdapter.GRAPHITE_PORT_OPTION, graphitePort.toString());
+    config.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteHost);
+    config.put(GraphiteReporter.GRAPHITE_PORT_OPTION, graphitePort.toString());
 
-    testAdapter = new GraphiteAdapter(config);
+    testAdapter = new GraphiteReporter(config);
     testAdapter.connect();
   }
 

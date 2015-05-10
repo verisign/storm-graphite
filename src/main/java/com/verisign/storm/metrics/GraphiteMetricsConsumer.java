@@ -18,8 +18,8 @@ import backtype.storm.metric.api.IMetricsConsumer;
 import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.adapters.AbstractAdapter;
 import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,15 +62,16 @@ import java.util.Map;
  */
 public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
-  private static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
-  private static final String REPORTER_NAME = "metrics.reporter.name";
+  public static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
+  public static final String REPORTER_NAME = "metrics.reporter.name";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
   private static final String DEFAULT_PREFIX = "metrics";
 
   private String graphitePrefix;
   private String stormId;
-  private AbstractAdapter adapter;
   private Map reporterConfig;
+
+  protected AbstractReporter adapter;
 
   protected String getStormId() {
     return stormId;
@@ -98,24 +99,25 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
 
     try {
-      adapter = configureReporter(reporterConfig);
+      adapter = configureAdapter(reporterConfig);
     }
     catch (Exception e) {
+      LOG.error("Error configuring metrics adapter:" + e.getMessage());
       errorReporter.reportError(e);
     }
 
     stormId = context.getStormId();
   }
 
-  private AbstractAdapter configureReporter(@SuppressWarnings("rawtypes") Map conf)
+  private AbstractReporter configureAdapter(@SuppressWarnings("rawtypes") Map reporterConfig)
       throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
       InvocationTargetException {
-    String className = (String) conf.get(REPORTER_NAME);
+    String className = (String) reporterConfig.get(REPORTER_NAME);
     Class reporterClass = Class.forName(className);
-    Constructor ctor = reporterClass.getConstructor(conf.getClass());
-    AbstractAdapter adapter = (AbstractAdapter) ctor.newInstance(conf);
+    Constructor ctor = reporterClass.getConstructor(Map.class);
+    AbstractReporter reporter = (AbstractReporter) ctor.newInstance(reporterConfig);
 
-    return adapter;
+    return reporter;
   }
 
   @Override @SuppressWarnings("unchecked")
@@ -167,7 +169,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     sb.append(taskInfo.srcComponentId).append(".");
     sb.append(taskInfo.srcWorkerHost).append(".");
     sb.append(taskInfo.srcWorkerPort).append(".");
-    sb.append(taskInfo.srcTaskId).append(".");
+    sb.append(taskInfo.srcTaskId);
     return sb.toString();
   }
 

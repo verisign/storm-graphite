@@ -1,4 +1,18 @@
-package com.verisign.storm.metrics.adapters;
+/*
+ * Copyright 2014 VeriSign, Inc.
+ *
+ * VeriSign licenses this file to you under the Apache License, version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ *
+ * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
+ */
+package com.verisign.storm.metrics.reporters;
 
 import com.google.common.base.Throwables;
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
@@ -22,9 +36,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 
-public class KafkaAdapter extends AbstractAdapter {
+public class KafkaReporter extends AbstractReporter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaAdapter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaReporter.class);
   public static final String KAFKA_TOPIC_NAME_FIELD = "metrics.kafka.topic";
   public static final String KAFKA_BROKER_LIST_FIELD = "metadata.broker.list";
 
@@ -35,8 +49,8 @@ public class KafkaAdapter extends AbstractAdapter {
   private Producer<String, byte[]> kafkaProducer;
 
   private int failures;
-  
-  public KafkaAdapter(Map conf) {
+
+  public KafkaReporter(Map conf) {
     super(conf);
 
     if (conf.containsKey(KAFKA_TOPIC_NAME_FIELD)) {
