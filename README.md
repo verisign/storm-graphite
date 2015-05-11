@@ -67,6 +67,8 @@ In comparison, storm-graphite (this project) provides a
 [GraphiteMetricsConsumer](src/main/java/com/verisign/storm/metrics/GraphiteMetricsConsumer.java) that reports these
 metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server instead of writing to a file.
 
+For large Storm clusters emitting a high volume of metrics, we've included a [KafkaReporter](src/main/java/com/verisign/storm/metrics/reporters/KafkaReporter.java) that reports metrics to a configurable [Kafka](https://kafka.apache.org/) topic.
+
 
 <a name="Usage"></a>
 
