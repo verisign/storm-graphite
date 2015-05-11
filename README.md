@@ -245,6 +245,7 @@ Option 1 is typically preferred by those users who already have automated deploy
 The GraphiteMetricsConsumer can be registered and configured by adding a snippet similar to the following to
 `storm.yaml` (see below) and by configuring the destination Graphite server appropriately (not shown here).
 
+##### Reporting Metrics to Graphite
 ```yaml
 ---
 ### Note: This is Storm's storm.yaml configuration file
@@ -255,11 +256,31 @@ topology.metrics.consumer.register:
   - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
     parallelism.hint: 1
     argument:
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
       metrics.graphite.host: "graphite.example.com"
       metrics.graphite.port: "2003"
       metrics.graphite.prefix: "storm.test"
       metrics.graphite.min-connect-attempt-interval-secs: "5"
 ```
+##### Reporting Metrics to Kafka
+
+```yaml
+---
+### Note: This is Storm's storm.yaml configuration file
+### Note: Kafka producer settings can be passed as registration arguments.
+
+# Controls the time interval between metric reports
+topology.builtin.metrics.bucket.size.secs: 10
+topology.metrics.consumer.register:
+  - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
+    parallelism.hint: 1
+    argument:
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+      metrics.graphite.prefix: "storm.test"
+	  metrics.kafka.topic: "metricsTopic"
+	  metadata.broker.list: "broker1.example.com:9092,broker2.example.com:9092,broker3.example.com:9092"
+```
+
 
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
 
@@ -280,6 +301,7 @@ storm::config_map:
     - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
       parallelism.hint: 1
       argument:
+        metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
         metrics.graphite.host: "graphite.example.com"
         metrics.graphite.port: "2003"
         metrics.graphite.prefix: "storm.test"
@@ -360,6 +382,7 @@ topology.builtin.metrics.bucket.size.secs: 10
 topology.metrics.consumer.register:
   - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
     argument:
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
       metrics.graphite.prefix: "storm.cluster.metrics"
     ...
 ```
