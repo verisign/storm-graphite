@@ -68,10 +68,10 @@ public class GraphiteMetricsConsumerTest {
     when(topologyContext.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
 
-    // When the Graphite reporter initializes
+    // When the metrics consumer initializes
     consumer.prepare(stormConfig, registrationArgument, topologyContext, errorReporter);
 
-    // Then the reporter should point at the right Graphite server with the proper configuration
+    // Then the reporter should be initialized with a Graphite reporter
     verify(topologyContext).getStormId();
     assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
@@ -93,10 +93,10 @@ public class GraphiteMetricsConsumerTest {
     when(topologyContext.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
 
-    // When the Graphite reporter initializes
+    // When the metrics consumer initializes
     consumer.prepare(stormConfig, registrationArgument, topologyContext, errorReporter);
 
-    // Then the reporter should point at the right Graphite server with the proper configuration
+    // Then the reporter should be initialized with a Kafka reporter
     verify(topologyContext).getStormId();
     assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
