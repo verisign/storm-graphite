@@ -21,6 +21,7 @@ import backtype.storm.task.TopologyContext;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.verisign.storm.metrics.reporters.GraphiteReporter;
+import com.verisign.storm.metrics.reporters.KafkaReporter;
 import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -52,7 +53,7 @@ public class GraphiteMetricsConsumerTest {
   private final TaskInfo taskInfo = new TaskInfo(testStormSrcWorkerHost, testStormSrcWorkerPort, testStormComponentID,
       testStormSrcTaskId, currentTime, 10);
 
-  @Test public void shouldReadConfigAndContext() {
+  @Test public void shouldInitializeGraphiteReporter() {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put("metrics.graphite.host", testGraphiteHost);
@@ -78,6 +79,31 @@ public class GraphiteMetricsConsumerTest {
     assertThat(consumer.adapter).isNotNull();
   }
 
+  @Test public void shouldInitializeKafkaReporter() {
+    // Given a Graphite configuration and topology context
+    Map<String, String> stormConfig = Maps.newHashMap();
+    stormConfig.put("metadata.broker.list", "127.0.0.1:9092");
+    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.KafkaReporter");
+
+    Map<String, String> registrationArgument = Maps.newHashMap();
+    registrationArgument.put("metrics.kafka.topic", "testTopic");
+    registrationArgument.put("metrics.graphite.prefix", testPrefix);
+
+    TopologyContext topologyContext = mock(TopologyContext.class);
+    when(topologyContext.getStormId()).thenReturn(testTopologyName);
+    IErrorReporter errorReporter = mock(IErrorReporter.class);
+
+    // When the Graphite reporter initializes
+    consumer.prepare(stormConfig, registrationArgument, topologyContext, errorReporter);
+
+    // Then the reporter should point at the right Graphite server with the proper configuration
+    verify(topologyContext).getStormId();
+    assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
+    assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
+    assertThat(consumer.adapter).isInstanceOf(KafkaReporter.class);
+    assertThat(consumer.adapter).isNotNull();
+
+  }
   @DataProvider(name = "generateDataPointsInt") public Object[][] generateDataPointsInt() {
 
     DataPoint dpInt = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
@@ -141,7 +167,7 @@ public class GraphiteMetricsConsumerTest {
     return new Object[][] { new Object[] { dpList } };
   }
 
-  @Test(dependsOnMethods = { "shouldReadConfigAndContext" }, dataProvider = "generateDataPointsLong")
+  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsLong")
   public void shouldReadDataAndSendLong(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
@@ -184,7 +210,7 @@ public class GraphiteMetricsConsumerTest {
     return new Object[][] { new Object[] { dpList } };
   }
 
-  @Test(dependsOnMethods = { "shouldReadConfigAndContext" }, dataProvider = "generateDataPointsFloat")
+  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsFloat")
   public void shouldReadDataAndSendFloat(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
@@ -227,7 +253,7 @@ public class GraphiteMetricsConsumerTest {
     return new Object[][] { new Object[] { dpList } };
   }
 
-  @Test(dependsOnMethods = { "shouldReadConfigAndContext" }, dataProvider = "generateDataPointsDouble")
+  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsDouble")
   public void shouldReadDataAndSendDouble(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
