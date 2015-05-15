@@ -18,7 +18,7 @@ import backtype.storm.metric.api.IMetricsConsumer;
 import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
+import com.verisign.storm.metrics.graphite.ConnectionFailureException;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,7 +184,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     try {
       adapter.connect();
     }
-    catch (GraphiteConnectionFailureException e) {
+    catch (ConnectionFailureException e) {
       String trace = Throwables.getStackTraceAsString(e);
       LOG.error("Could not connect to adapter backend " + adapter.getServerFingerprint() + ": " + trace);
     }
@@ -219,7 +219,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       try {
         adapter.disconnect();
       }
-      catch (GraphiteConnectionFailureException e) {
+      catch (ConnectionFailureException e) {
         String trace = Throwables.getStackTraceAsString(e);
         LOG.error("Could not disconnect from adapter backend " + adapter.getServerFingerprint() + ": " + trace);
       }

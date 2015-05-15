@@ -15,7 +15,7 @@
 package com.verisign.storm.metrics.reporters;
 
 import com.google.common.base.Charsets;
-import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
+import com.verisign.storm.metrics.graphite.ConnectionFailureException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -59,7 +59,7 @@ public class GraphiteReporterTest {
     graphiteServer.configureBlocking(false);
   }
 
-  private void launchGraphiteClient() throws GraphiteConnectionFailureException {
+  private void launchGraphiteClient() throws ConnectionFailureException {
     HashMap<String, Object> config = new HashMap<String, Object>();
 
     config.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteHost);

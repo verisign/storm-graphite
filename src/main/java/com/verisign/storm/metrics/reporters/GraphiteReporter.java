@@ -16,8 +16,8 @@ package com.verisign.storm.metrics.reporters;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
+import com.verisign.storm.metrics.graphite.ConnectionFailureException;
 import com.verisign.storm.metrics.graphite.GraphiteCodec;
-import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +85,7 @@ public class GraphiteReporter extends AbstractReporter {
     return serverFingerprint;
   }
 
-  @Override public void connect() throws GraphiteConnectionFailureException {
+  @Override public void connect() throws ConnectionFailureException {
     lastConnectAttemptTimestampMs = nowMs();
     try {
       graphite.connect();
@@ -96,7 +96,7 @@ public class GraphiteReporter extends AbstractReporter {
     catch (IOException e) {
       String msg = "Could not connect to Carbon daemon running at " + serverFingerprint + ": " + e.getMessage();
       LOG.error(msg);
-      throw new GraphiteConnectionFailureException(msg);
+      throw new ConnectionFailureException(msg);
     }
   }
 
@@ -164,7 +164,7 @@ public class GraphiteReporter extends AbstractReporter {
         this.disconnect();
         this.connect();
       }
-      catch (GraphiteConnectionFailureException cf) {
+      catch (ConnectionFailureException cf) {
         //Do nothing, error already logged in connect()
       }
     }

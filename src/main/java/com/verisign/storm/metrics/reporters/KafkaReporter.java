@@ -16,8 +16,8 @@ package com.verisign.storm.metrics.reporters;
 
 import com.google.common.base.Throwables;
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
+import com.verisign.storm.metrics.graphite.ConnectionFailureException;
 import com.verisign.storm.metrics.graphite.GraphiteCodec;
-import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
@@ -85,10 +85,10 @@ public class KafkaReporter extends AbstractReporter {
     failures = 0;
   }
 
-  @Override public void connect() throws GraphiteConnectionFailureException {
+  @Override public void connect() throws ConnectionFailureException {
   }
 
-  @Override public void disconnect() throws GraphiteConnectionFailureException {
+  @Override public void disconnect() throws ConnectionFailureException {
   }
 
   @Override public void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
