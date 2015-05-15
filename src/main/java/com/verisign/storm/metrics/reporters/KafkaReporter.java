@@ -103,6 +103,9 @@ public class KafkaReporter extends AbstractReporter {
         String trace = Throwables.getStackTraceAsString(e);
         LOG.error("Error parsing metric value {} in path {}: {}", metrics.get(key), prefix + key, trace);
       }
+      catch (NullPointerException npe) {
+        LOG.error("Error appending metric with name {} to buffer, retrieved value is null.", key);
+      }
     }
 
     buffer.add(new GraphingMetrics(prefix, timestamp, metricsDoubleMap));
