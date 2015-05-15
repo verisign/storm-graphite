@@ -245,7 +245,9 @@ Option 1 is typically preferred by those users who already have automated deploy
 #### Configuring Storm directly
 
 The GraphiteMetricsConsumer can be registered and configured by adding a snippet similar to the following to
-`storm.yaml` (see below) and by configuring the destination Graphite server appropriately (not shown here).
+`storm.yaml` (see below) and by configuring the destination Graphite server appropriately (not shown here). Note that
+an individual consumer cannot be configured to report to both Graphite and Kafka. However, two separate consumers may
+be registered for each reporter.
 
 ##### Reporting Metrics to Graphite
 ```yaml
