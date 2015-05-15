@@ -82,11 +82,11 @@ public class GraphiteMetricsConsumerTest {
   @Test public void shouldInitializeKafkaReporter() {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
-    stormConfig.put("metadata.broker.list", "127.0.0.1:9092");
+    stormConfig.put(KafkaReporter.KAFKA_BROKER_LIST_FIELD, "127.0.0.1:9092");
     stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.KafkaReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
-    registrationArgument.put("metrics.kafka.topic", "testTopic");
+    registrationArgument.put(KafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
     registrationArgument.put("metrics.graphite.prefix", testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);

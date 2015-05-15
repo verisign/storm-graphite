@@ -40,7 +40,8 @@ public class KafkaReporter extends AbstractReporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaReporter.class);
   public static final String KAFKA_TOPIC_NAME_FIELD = "metrics.kafka.topic";
-  public static final String KAFKA_BROKER_LIST_FIELD = "metadata.broker.list";
+  public static final String KAFKA_BROKER_LIST_FIELD = "metrics.kafka.metadata.broker.list";
+  public static final String KAFKA_METADATA_BROKER_LIST = "metadata.broker.list";
 
   private String kafkaTopicName;
   private String kafkaBrokerList;
@@ -62,6 +63,10 @@ public class KafkaReporter extends AbstractReporter {
 
     if (conf.containsKey(KAFKA_BROKER_LIST_FIELD)) {
       kafkaBrokerList = (String) conf.get(KAFKA_BROKER_LIST_FIELD);
+      conf.put(KAFKA_METADATA_BROKER_LIST, kafkaBrokerList);
+    }
+    else if (conf.containsKey(KAFKA_METADATA_BROKER_LIST)) {
+      kafkaBrokerList = (String) conf.get(KAFKA_METADATA_BROKER_LIST);
     }
     else {
       throw new IllegalArgumentException("Field " + KAFKA_BROKER_LIST_FIELD + " required.");

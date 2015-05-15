@@ -280,7 +280,7 @@ topology.metrics.consumer.register:
       metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
       metrics.graphite.prefix: "storm.test"
 	  metrics.kafka.topic: "metricsTopic"
-	  metadata.broker.list: "broker1.example.com:9092,broker2.example.com:9092,broker3.example.com:9092"
+	  metrics.kafka.metadata.broker.list: "broker1.example.com:9092,broker2.example.com:9092,broker3.example.com:9092"
 ```
 
 
