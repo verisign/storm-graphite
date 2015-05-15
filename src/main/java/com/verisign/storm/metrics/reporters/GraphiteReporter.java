@@ -48,11 +48,6 @@ public class GraphiteReporter extends AbstractReporter {
   private final Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
-  public static AbstractReporter newAdapter(Map conf) {
-    return new GraphiteReporter(conf);
-
-  }
-
   public GraphiteReporter(Map<String, Object> conf) {
     super(conf);
 
