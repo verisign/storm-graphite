@@ -21,9 +21,9 @@ import com.verisign.storm.metrics.graphite.GraphiteConnectionFailureException;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
-import org.apache.avro.Schema;
-import org.apache.avro.io.*;
-import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.slf4j.Logger;
@@ -83,11 +83,9 @@ public class KafkaReporter extends AbstractReporter {
   }
 
   @Override public void connect() throws GraphiteConnectionFailureException {
-    return;
   }
 
   @Override public void disconnect() throws GraphiteConnectionFailureException {
-    return;
   }
 
   @Override public void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
@@ -144,11 +142,5 @@ public class KafkaReporter extends AbstractReporter {
     encoder.flush();
     out.close();
     return out.toByteArray();
-  }
-
-  private <T extends SpecificRecordBase> T deserialize(byte[] bytes, Schema schema) throws IOException {
-    SpecificDatumReader<T> reader = new SpecificDatumReader<T>(schema);
-    Decoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
-    return reader.read(null, decoder);
   }
 }
