@@ -68,8 +68,7 @@ In comparison, storm-graphite (this project) provides a
 [GraphiteMetricsConsumer](src/main/java/com/verisign/storm/metrics/GraphiteMetricsConsumer.java) that reports these
 metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server instead of writing to a file.
 
-For large Storm clusters emitting a high volume of metrics, we've included a [KafkaReporter](src/main/java/com/verisign/storm/metrics/reporters/KafkaReporter.java) that reports metrics to a configurable [Kafka](https://kafka.apache.org/) topic.
-
+For large Storm clusters emitting a high volume of metrics, we've included a [KafkaReporter](src/main/java/com/verisign/storm/metrics/reporters/KafkaReporter.java) that reports metrics to a configurable [Kafka](https://kafka.apache.org/) topic. Applications leveraging a Kafka consumer can then subscribe to this topic and consume the Avro-encoded metric messages using the supplied Avro [schema](src/main/avro/graphingMetrics.avsc). This can be useful for sending metric data to multiple endpoints, introducing flow control, and ensuring durability.
 
 <a name="Usage"></a>
 
