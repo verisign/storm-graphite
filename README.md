@@ -2,8 +2,9 @@
 
 An [Apache Storm](https://storm.apache.org/) `IMetricsConsumer`
 ([source](https://github.com/apache/storm/blob/master/storm-core/src/jvm/backtype/storm/metric/api/IMetricsConsumer.java))
-that forwards Storm's built-in metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server for
-real-time graphing, visualization, and operational dashboards.
+implementation that forwards Storm's built-in metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server for
+real-time graphing, visualization, and operational dashboards. We also provide the option to forward these metrics to 
+Apache [Kafka](https://github.com/apache/kafka) instead of Graphite, which may be preferable when your Storm clusters are large.
 
 ---
 
