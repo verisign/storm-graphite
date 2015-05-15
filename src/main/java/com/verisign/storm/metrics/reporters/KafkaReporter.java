@@ -36,6 +36,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * This class encapsulates an Apache Kafka producer, sending generated metrics into a configurable Kafka topic.
+ */
 public class KafkaReporter extends AbstractReporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaReporter.class);
