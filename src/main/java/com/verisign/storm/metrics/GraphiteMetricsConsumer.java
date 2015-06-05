@@ -35,9 +35,11 @@ import java.util.Map;
  *
  * To use, add this to your topology's configuration:
  *
+ * To report to a Graphite endpoint:
  * <pre>
  * {@code
  *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.GraphiteReporter");
  *   conf.put("metrics.graphite.host", "<GRAPHITE HOSTNAME>");
  *   conf.put("metrics.graphite.port", "<GRAPHITE PORT>");
  *   conf.put("metrics.graphite.prefix", "<DOT DELIMITED PREFIX>");
@@ -46,19 +48,48 @@ import java.util.Map;
  * }
  * </pre>
  *
+ * To report to a Kafka endpoint:
+ * <pre>
+ * {@code
+ *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.KafkaReporter");
+ *   conf.put("metrics.graphite.prefix", "storm.cluster.metrics");
+ *   conf.put("metrics.kafka.topic", "graphingMetrics");
+ *   conf.put("metrics.kafka.metadata.broker.list", "kafka1.example.com:9092,kafka2.example.com:9092");
+ * }
+ * </pre>  
+ *
+ *  
  * Or edit the storm.yaml config file:
  *
+ * To report to a Graphite endpoint: 
  * <pre>
  * {@code
  *   topology.metrics.consumer.register:
  *     - class: "backtype.storm.metrics.GraphiteMetricsConsumer"
  *       parallelism.hint: 1
+ *   metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"       
  *   metrics.graphite.host: "<GRAPHITE HOSTNAME>"
  *   metrics.graphite.port: "<GRAPHITE PORT>"
  *   metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
  *   metrics.graphite.min-connect-attempt-interval-secs: "5"
  * }
  * </pre>
+ *
+ * To report to a Kafka endpoint:
+ * <pre>
+ * {@code
+ *  topology.metrics.consumer.register:
+ *    - class: "backtype.storm.metrics.GraphiteMetricsConsumer"
+ *      parallelism.hint: 1
+ *      metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+ *      metrics.graphite.prefix: "storm.cluster.metrics"
+ *      metrics.kafka.topic: "graphingMetrics"
+ *      metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
+ * }
+ * </pre> 
+ * 
+
  */
 public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
