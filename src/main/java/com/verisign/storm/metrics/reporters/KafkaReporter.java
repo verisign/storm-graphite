@@ -130,7 +130,7 @@ public class KafkaReporter extends AbstractReporter {
     }
   }
 
-  @Override public int getFailures() {
+  @Override public long getFailures() {
     return failures;
   }
 

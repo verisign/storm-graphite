@@ -20,7 +20,7 @@ public abstract class AbstractReporter {
 
   public abstract void sendBufferContents() throws IOException;
 
-  public abstract int getFailures();
+  public abstract long getFailures();
 
   public abstract String getServerFingerprint();
 

@@ -184,7 +184,7 @@ public class GraphiteReporter extends AbstractReporter {
    *
    * @return the number of failed writes to the Graphite server
    */
-  @Override public int getFailures() {
+  @Override public long getFailures() {
     return graphite.getFailures();
   }
 
