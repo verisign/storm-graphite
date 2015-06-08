@@ -66,7 +66,7 @@ import java.util.Map;
  * <pre>
  * {@code
  *   topology.metrics.consumer.register:
- *     - class: "backtype.storm.metrics.GraphiteMetricsConsumer"
+ *     - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *       parallelism.hint: 1
  *   metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"       
  *   metrics.graphite.host: "<GRAPHITE HOSTNAME>"
@@ -80,7 +80,7 @@ import java.util.Map;
  * <pre>
  * {@code
  *  topology.metrics.consumer.register:
- *    - class: "backtype.storm.metrics.GraphiteMetricsConsumer"
+ *    - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *      parallelism.hint: 1
  *      metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
  *      metrics.graphite.prefix: "storm.cluster.metrics"
