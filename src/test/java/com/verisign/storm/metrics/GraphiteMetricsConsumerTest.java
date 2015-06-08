@@ -31,7 +31,7 @@ import java.util.*;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-
+@SuppressWarnings("unchecked")
 public class GraphiteMetricsConsumerTest {
 
   private final Long currentTime = System.currentTimeMillis();
@@ -43,7 +43,6 @@ public class GraphiteMetricsConsumerTest {
   private Integer testStormSrcTaskId = 3008;
 
   private String testTopologyName = "Example-Storm-Topology-Name-13-1425495763";
-  private String testSimpleTopologyName = "Example-Storm-Topology-Name";
   private String testReporterName = "com.verisign.storm.metrics.reporters.GraphiteReporter";
   private String testGraphiteHost = "127.0.0.1";
   private String testGraphitePort = "2003";
@@ -104,22 +103,12 @@ public class GraphiteMetricsConsumerTest {
     assertThat(consumer.adapter).isNotNull();
 
   }
-  @DataProvider(name = "generateDataPointsInt") public Object[][] generateDataPointsInt() {
-
-    DataPoint dpInt = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpInt.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextInt());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpInt);
-    return new Object[][] { new Object[] { dpList } };
-  }
 
   @Test(dataProvider = "generateDataPointsInt") public void shouldReadDataAndSendInt(Collection<DataPoint> dataPoints) {
     // Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
     Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", testGraphiteHost, "metrics.graphite.port", testGraphitePort.toString(),
+        .of("metrics.graphite.host", testGraphiteHost, "metrics.graphite.port", testGraphitePort,
             "metrics.graphite.prefix", testPrefix, "metrics.reporter.name", testReporterName);
 
     Object obj = mock(Object.class);
@@ -136,35 +125,8 @@ public class GraphiteMetricsConsumerTest {
     consumer.handleDataPoints(taskInfo, dataPoints);
 
     // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Object> expMap = new HashMap<String, Object>();
-    for (DataPoint dp : dataPoints) {
-      Map<String, Object> datamap = (Map<String, Object>) dp.value;
-
-      for (String key : datamap.keySet()) {
-        expMap.put(key, datamap.get(key));
-      }
-    }
-
+    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
     verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
-  }
-
-  private String getExpectedMetricPrefix() {
-    return testPrefix + "." +
-        testSimpleTopologyName + "." +
-        testStormComponentID + "." +
-        testStormSrcWorkerHost + "." +
-        testStormSrcWorkerPort + "." +
-        testStormSrcTaskId;
-  }
-
-  @DataProvider(name = "generateDataPointsLong") public Object[][] generateDataPointsLong() {
-    DataPoint dpLong = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpLong.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextLong());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpLong);
-    return new Object[][] { new Object[] { dpList } };
   }
 
   @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsLong")
@@ -188,26 +150,8 @@ public class GraphiteMetricsConsumerTest {
     consumer.handleDataPoints(taskInfo, dataPoints);
 
     // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Object> expMap = new HashMap<String, Object>();
-    for (DataPoint dp : dataPoints) {
-      Map<String, Object> datamap = (Map<String, Object>) dp.value;
-
-      for (String key : datamap.keySet()) {
-        expMap.put(key, datamap.get(key));
-      }
-    }
-
+    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
     verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
-  }
-
-  @DataProvider(name = "generateDataPointsFloat") public Object[][] generateDataPointsFloat() {
-    DataPoint dpFloat = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpFloat.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextFloat());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpFloat);
-    return new Object[][] { new Object[] { dpList } };
   }
 
   @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsFloat")
@@ -231,26 +175,8 @@ public class GraphiteMetricsConsumerTest {
     consumer.handleDataPoints(taskInfo, dataPoints);
 
     // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Object> expMap = new HashMap<String, Object>();
-    for (DataPoint dp : dataPoints) {
-      Map<String, Object> datamap = (Map<String, Object>) dp.value;
-
-      for (String key : datamap.keySet()) {
-        expMap.put(key, datamap.get(key));
-      }
-    }
-
+    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
     verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
-  }
-
-  @DataProvider(name = "generateDataPointsDouble") public Object[][] generateDataPointsDouble() {
-    DataPoint dpDouble = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpDouble.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextDouble());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpDouble);
-    return new Object[][] { new Object[] { dpList } };
   }
 
   @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsDouble")
@@ -274,15 +200,71 @@ public class GraphiteMetricsConsumerTest {
     consumer.handleDataPoints(taskInfo, dataPoints);
 
     // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Object> expMap = new HashMap<String, Object>();
+    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
+    verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
+  }
+
+  private HashMap<String, Double> buildExpectedMetricMap(Collection<DataPoint> dataPoints) {
+    HashMap<String, Double> expMap = new HashMap<String, Double>();
     for (DataPoint dp : dataPoints) {
+
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
 
       for (String key : datamap.keySet()) {
-        expMap.put(key, datamap.get(key));
+        expMap.put(key, ((Number) datamap.get(key)).doubleValue());
       }
     }
+    return expMap;
+  }
 
-    verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
+  private String getExpectedMetricPrefix() {
+    String testSimpleTopologyName = "Example-Storm-Topology-Name";
+    return testPrefix + "." +
+        testSimpleTopologyName + "." +
+        testStormComponentID + "." +
+        testStormSrcWorkerHost + "." +
+        testStormSrcWorkerPort + "." +
+        testStormSrcTaskId;
+  }
+
+  @DataProvider(name = "generateDataPointsInt") public Object[][] generateDataPointsInt() {
+
+    DataPoint dpInt = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
+    for (int i = 0; i < 5; i++) {
+      ((Map) dpInt.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextInt());
+    }
+    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
+    dpList.add(dpInt);
+    return new Object[][] { new Object[] { dpList } };
+  }
+
+  @DataProvider(name = "generateDataPointsLong") public Object[][] generateDataPointsLong() {
+    DataPoint dpLong = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
+    for (int i = 0; i < 5; i++) {
+      ((Map) dpLong.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextLong());
+    }
+    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
+    dpList.add(dpLong);
+    return new Object[][] { new Object[] { dpList } };
+  }
+
+  @DataProvider(name = "generateDataPointsFloat") public Object[][] generateDataPointsFloat() {
+    DataPoint dpFloat = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
+    for (int i = 0; i < 5; i++) {
+      ((Map) dpFloat.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextFloat());
+    }
+    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
+    dpList.add(dpFloat);
+    return new Object[][] { new Object[] { dpList } };
+  }
+
+  @DataProvider(name = "generateDataPointsDouble") public Object[][] generateDataPointsDouble() {
+    DataPoint dpDouble = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
+    for (int i = 0; i < 5; i++) {
+      ((Map) dpDouble.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextDouble());
+    }
+    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
+    dpList.add(dpDouble);
+    return new Object[][] { new Object[] { dpList } };
   }
 }

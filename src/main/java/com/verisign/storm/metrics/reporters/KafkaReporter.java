@@ -91,7 +91,7 @@ public class KafkaReporter extends AbstractReporter {
   @Override public void disconnect() throws ConnectionFailureException {
   }
 
-  @Override public void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
+  @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     Map<String, Double> metricsDoubleMap = new HashMap<String, Double>();
 
     for (String key : metrics.keySet()) {
@@ -134,7 +134,7 @@ public class KafkaReporter extends AbstractReporter {
     return failures;
   }
 
-  @Override public String getServerFingerprint() {
+  @Override public String getBackendFingerprint() {
     return kafkaBrokerList;
   }
 

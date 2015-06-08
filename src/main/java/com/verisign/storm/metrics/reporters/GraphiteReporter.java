@@ -81,7 +81,7 @@ public class GraphiteReporter extends AbstractReporter {
 
   }
 
-  @Override public String getServerFingerprint() {
+  @Override public String getBackendFingerprint() {
     return serverFingerprint;
   }
 
@@ -120,7 +120,7 @@ public class GraphiteReporter extends AbstractReporter {
 
 
 
-  @Override public void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
+  @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();

@@ -83,25 +83,25 @@ public class GraphiteReporterTest {
 
   @DataProvider(name = "metrics")
   public Object[][] metricsProvider() {
-    return new Object[][] { new Object[] { "test.storm", "metric1", "1.00", new Long("1408393534971"),
+    return new Object[][] { new Object[] { "test.storm", "metric1", 1.00, new Long("1408393534971"),
         "test.storm.metric1 1.00 1408393534971\n" },
-        new Object[] { "test.storm", "metric2", "0.00", new Long("1408393534971"),
+        new Object[] { "test.storm", "metric2", 0.00, new Long("1408393534971"),
             "test.storm.metric2 0.00 1408393534971\n" },
-        new Object[] { "test.storm", "metric3", "3.14", new Long("1408393534971"),
+        new Object[] { "test.storm", "metric3", 3.14, new Long("1408393534971"),
             "test.storm.metric3 3.14 1408393534971\n" },
-        new Object[] { "test.storm", "metric3", "99", new Long("1408393534971"),
+        new Object[] { "test.storm", "metric3", 99.0, new Long("1408393534971"),
             "test.storm.metric3 99.00 1408393534971\n" },
-        new Object[] { "test.storm", "metric3", "1e3", new Long("1408393534971"),
+        new Object[] { "test.storm", "metric3", 1e3, new Long("1408393534971"),
             "test.storm.metric3 1000.00 1408393534971\n" } };
   }
 
   @Test(dataProvider = "metrics")
-  public void sendMetricTupleAsFormattedStringToGraphiteServer(String metricPrefix, String metricKey, String value,
+  public void sendMetricTupleAsFormattedStringToGraphiteServer(String metricPrefix, String metricKey, Double value,
       long timestamp,
       String expectedMessageReceived) throws IOException {
     // Given a tuple representing a (metricPath, value, timestamp) metric (injected via data provider)
 
-    HashMap<String, Object> values = new HashMap<String, Object>();
+    HashMap<String, Double> values = new HashMap<String, Double>();
     values.put(metricKey, value);
     // When the adapter sends the metric
     testAdapter.appendToBuffer(metricPrefix, values, timestamp);

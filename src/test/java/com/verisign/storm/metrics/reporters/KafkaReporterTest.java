@@ -129,7 +129,7 @@ public class KafkaReporterTest {
     /* GIVEN: A Zookeeper instance, a Kafka broker, and a the Kafka adapter we're testing */
     
     /* WHEN: A new metric is appended to the adapter's buffer and we tell the adapter to send its data */
-    HashMap<String, Object> metrics = new HashMap<String, Object>();
+    HashMap<String, Double> metrics = new HashMap<String, Double>();
     metrics.put(metricKey, value);
 
     kafkaAdapter.appendToBuffer(metricPrefix, metrics, timestamp);

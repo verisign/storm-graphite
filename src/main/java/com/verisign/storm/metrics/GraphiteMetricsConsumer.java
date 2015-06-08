@@ -59,7 +59,7 @@ import java.util.Map;
  * }
  * </pre>  
  *
- *  
+ *
  * Or edit the storm.yaml config file:
  *
  * To report to a Graphite endpoint: 
@@ -88,7 +88,7 @@ import java.util.Map;
  *      metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
  * }
  * </pre> 
- * 
+ *
 
  */
 public class GraphiteMetricsConsumer implements IMetricsConsumer {
@@ -169,15 +169,31 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
       // Most data points contain a Map as a value.
       if (dataPoint.value instanceof Map) {
-        Map<String, Object> m = (Map<String, Object>) dataPoint.value;
-        if (!m.isEmpty()) {
-          appendToBuffer(metricPrefix, m, taskInfo.timestamp);
+        Map<String, Object> dataMap = (Map<String, Object>) dataPoint.value;
+        Map<String, Double> bufferMap = new HashMap<String, Double>();
+
+        for (String key : dataMap.keySet()) {
+          if (dataMap.get(key) instanceof Number) {
+            bufferMap.put(key, ((Number) dataMap.get(key)).doubleValue());
+          }
+          else {
+            LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
+                dataMap.get(key).getClass().getName());
+          }
         }
+
+        appendToBuffer(metricPrefix, bufferMap, taskInfo.timestamp);
+      }
+
+      else if (dataPoint.value instanceof Number) {
+        Double dblValue = ((Number) dataPoint.value).doubleValue();
+        HashMap<String, Double> metric = new HashMap<String, Double>();
+        metric.put(dataPoint.name + "value", dblValue);
+        appendToBuffer(metricPrefix, metric, taskInfo.timestamp);
       }
       else {
-        HashMap<String, Object> metric = new HashMap<String, Object>();
-        metric.put(dataPoint.name + "value", dataPoint.value);
-        appendToBuffer(metricPrefix, metric, taskInfo.timestamp);
+        LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
+            dataPoint.value.getClass().getName());
       }
     }
     sendMetrics();
@@ -217,11 +233,11 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
     catch (ConnectionFailureException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      LOG.error("Could not connect to adapter backend " + adapter.getServerFingerprint() + ": " + trace);
+      LOG.error("Could not connect to adapter backend " + adapter.getBackendFingerprint() + ": " + trace);
     }
   }
 
-  protected void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp) {
+  protected void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     if (adapter != null) {
       adapter.appendToBuffer(prefix, metrics, timestamp);
     }
@@ -239,7 +255,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
     catch (IOException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      String msg = "Could not send metrics update to backend server " + adapter.getServerFingerprint() + ": " + trace +
+      String msg = "Could not send metrics update to backend server " + adapter.getBackendFingerprint() + ": " + trace +
           " (" + adapter.getFailures() + " failed attempts so far)";
       LOG.error(msg);
     }
@@ -252,7 +268,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       }
       catch (ConnectionFailureException e) {
         String trace = Throwables.getStackTraceAsString(e);
-        LOG.error("Could not disconnect from adapter backend " + adapter.getServerFingerprint() + ": " + trace);
+        LOG.error("Could not disconnect from adapter backend " + adapter.getBackendFingerprint() + ": " + trace);
       }
     }
   }

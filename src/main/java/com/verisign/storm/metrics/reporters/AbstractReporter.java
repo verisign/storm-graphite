@@ -14,7 +14,7 @@ public abstract class AbstractReporter {
 
   public abstract void disconnect() throws ConnectionFailureException;
 
-  public abstract void appendToBuffer(String prefix, Map<String, Object> metrics, long timestamp);
+  public abstract void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp);
 
   public abstract void emptyBuffer();
 
@@ -22,6 +22,6 @@ public abstract class AbstractReporter {
 
   public abstract long getFailures();
 
-  public abstract String getServerFingerprint();
+  public abstract String getBackendFingerprint();
 
 }
