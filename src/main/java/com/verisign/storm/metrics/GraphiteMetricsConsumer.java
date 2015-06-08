@@ -68,11 +68,12 @@ import java.util.Map;
  *   topology.metrics.consumer.register:
  *     - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *       parallelism.hint: 1
- *   metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"       
- *   metrics.graphite.host: "<GRAPHITE HOSTNAME>"
- *   metrics.graphite.port: "<GRAPHITE PORT>"
- *   metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
- *   metrics.graphite.min-connect-attempt-interval-secs: "5"
+ *       argument:
+ *         metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
+ *         metrics.graphite.host: "<GRAPHITE HOSTNAME>"
+ *         metrics.graphite.port: "<GRAPHITE PORT>"
+ *         metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
+ *         metrics.graphite.min-connect-attempt-interval-secs: "5"
  * }
  * </pre>
  *
@@ -82,10 +83,11 @@ import java.util.Map;
  *  topology.metrics.consumer.register:
  *    - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *      parallelism.hint: 1
- *      metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
- *      metrics.graphite.prefix: "storm.cluster.metrics"
- *      metrics.kafka.topic: "graphingMetrics"
- *      metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
+ *      argument:      
+ *        metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+ *        metrics.graphite.prefix: "storm.cluster.metrics"
+ *        metrics.kafka.topic: "graphingMetrics"
+ *        metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
  * }
  * </pre> 
  *
