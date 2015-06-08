@@ -2,8 +2,9 @@
 
 An [Apache Storm](https://storm.apache.org/) `IMetricsConsumer`
 ([source](https://github.com/apache/storm/blob/master/storm-core/src/jvm/backtype/storm/metric/api/IMetricsConsumer.java))
-that forwards Storm's built-in metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server for
-real-time graphing, visualization, and operational dashboards.
+implementation that forwards Storm's built-in metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server for
+real-time graphing, visualization, and operational dashboards. We also provide the option to forward these metrics to 
+Apache [Kafka](https://github.com/apache/kafka) instead of Graphite, which may be preferable when your Storm clusters are large.
 
 ---
 
@@ -67,6 +68,7 @@ In comparison, storm-graphite (this project) provides a
 [GraphiteMetricsConsumer](src/main/java/com/verisign/storm/metrics/GraphiteMetricsConsumer.java) that reports these
 metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server instead of writing to a file.
 
+For large Storm clusters emitting a high volume of metrics, we've included a [KafkaReporter](src/main/java/com/verisign/storm/metrics/reporters/KafkaReporter.java) that reports metrics to a configurable [Kafka](https://kafka.apache.org/) topic. Applications leveraging a Kafka consumer can then subscribe to this topic and consume the Avro-encoded metric messages using the supplied Avro [schema](src/main/avro/graphingMetrics.avsc). This can be useful for sending metric data to multiple endpoints, introducing flow control, and ensuring durability.
 
 <a name="Usage"></a>
 
@@ -243,8 +245,11 @@ Option 1 is typically preferred by those users who already have automated deploy
 #### Configuring Storm directly
 
 The GraphiteMetricsConsumer can be registered and configured by adding a snippet similar to the following to
-`storm.yaml` (see below) and by configuring the destination Graphite server appropriately (not shown here).
+`storm.yaml` (see below) and by configuring the destination Graphite server appropriately (not shown here). Note that
+an individual consumer cannot be configured to report to both Graphite and Kafka. However, two separate consumers may
+be registered for each reporter.
 
+##### Reporting Metrics to Graphite
 ```yaml
 ---
 ### Note: This is Storm's storm.yaml configuration file
@@ -255,11 +260,31 @@ topology.metrics.consumer.register:
   - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
     parallelism.hint: 1
     argument:
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
       metrics.graphite.host: "graphite.example.com"
       metrics.graphite.port: "2003"
       metrics.graphite.prefix: "storm.test"
       metrics.graphite.min-connect-attempt-interval-secs: "5"
 ```
+##### Reporting Metrics to Kafka
+
+```yaml
+---
+### Note: This is Storm's storm.yaml configuration file
+### Note: Kafka producer settings can be passed as registration arguments.
+
+# Controls the time interval between metric reports
+topology.builtin.metrics.bucket.size.secs: 10
+topology.metrics.consumer.register:
+  - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
+    parallelism.hint: 1
+    argument:
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+      metrics.graphite.prefix: "storm.test"
+	  metrics.kafka.topic: "metricsTopic"
+	  metrics.kafka.metadata.broker.list: "broker1.example.com:9092,broker2.example.com:9092,broker3.example.com:9092"
+```
+
 
 You can also experiment with parallelism hints larger than one, or change the bucket time to suit your needs.
 
@@ -280,6 +305,7 @@ storm::config_map:
     - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
       parallelism.hint: 1
       argument:
+        metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
         metrics.graphite.host: "graphite.example.com"
         metrics.graphite.port: "2003"
         metrics.graphite.prefix: "storm.test"
@@ -360,6 +386,7 @@ topology.builtin.metrics.bucket.size.secs: 10
 topology.metrics.consumer.register:
   - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
     argument:
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
       metrics.graphite.prefix: "storm.cluster.metrics"
     ...
 ```

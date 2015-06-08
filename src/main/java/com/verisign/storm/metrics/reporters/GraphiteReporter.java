@@ -12,48 +12,80 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.graphite;
+package com.verisign.storm.metrics.reporters;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
+import com.verisign.storm.metrics.graphite.ConnectionFailureException;
+import com.verisign.storm.metrics.graphite.GraphiteCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 /**
  * This class is a wrapper for the Graphite class in the Metrics library.  It encapsulates the handling of errors that
  * may occur during network communication with Graphite/Carbon.
  */
-public class GraphiteAdapter {
+public class GraphiteReporter extends AbstractReporter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GraphiteAdapter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GraphiteReporter.class);
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
+  public static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
+  public static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
+  public static final String GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION
+      = "metrics.graphite.min-connect-attempt-interval-secs";
+
+
+  private String graphiteHost;
+  private int graphitePort;
+  private InetSocketAddress graphiteSocketAddr;
+
   private final String serverFingerprint;
   private final int minConnectAttemptIntervalSecs;
   private final Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
-  public GraphiteAdapter(InetSocketAddress server) {
-    this(server, DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS);
-  }
+  public GraphiteReporter(Map<String, Object> conf) {
+    super(conf);
 
-  public GraphiteAdapter(InetSocketAddress server, int minConnectAttemptIntervalSecs) {
-    if (server == null) {
-      throw new IllegalArgumentException("server address must not be null");
+    if (conf.containsKey(GRAPHITE_HOST_OPTION)) {
+      graphiteHost = (String) conf.get(GRAPHITE_HOST_OPTION);
     }
-    serverFingerprint = server.getAddress() + ":" + server.getPort();
-    this.minConnectAttemptIntervalSecs = minConnectAttemptIntervalSecs;
-    this.graphite = new Graphite(server);
+    else {
+      throw new IllegalArgumentException("Field " + GRAPHITE_HOST_OPTION + " required.");
+    }
+
+    if (conf.containsKey(GRAPHITE_PORT_OPTION)) {
+      graphitePort = Integer.parseInt((String) conf.get(GRAPHITE_PORT_OPTION));
+    }
+    else {
+      throw new IllegalArgumentException("Field " + GRAPHITE_PORT_OPTION + " required.");
+    }
+
+    if (conf.containsKey(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION)) {
+      minConnectAttemptIntervalSecs = Integer
+          .parseInt((String) conf.get(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION));
+    }
+    else {
+      minConnectAttemptIntervalSecs = DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS;
+    }
+
+    graphiteSocketAddr = new InetSocketAddress(graphiteHost, graphitePort);
+
+    serverFingerprint = graphiteSocketAddr.getAddress() + ":" + graphiteSocketAddr.getPort();
+    this.graphite = new Graphite(graphiteSocketAddr);
     lastConnectAttemptTimestampMs = 0;
+
   }
 
-  public String getServerFingerprint() {
+  @Override public String getBackendFingerprint() {
     return serverFingerprint;
   }
 
-  public void connect() throws GraphiteConnectionAttemptFailure {
+  @Override public void connect() throws ConnectionFailureException {
     lastConnectAttemptTimestampMs = nowMs();
     try {
       graphite.connect();
@@ -64,7 +96,7 @@ public class GraphiteAdapter {
     catch (IOException e) {
       String msg = "Could not connect to Carbon daemon running at " + serverFingerprint + ": " + e.getMessage();
       LOG.error(msg);
-      throw new GraphiteConnectionAttemptFailure(msg);
+      throw new ConnectionFailureException(msg);
     }
   }
 
@@ -72,7 +104,7 @@ public class GraphiteAdapter {
     return System.currentTimeMillis();
   }
 
-  public void disconnect() {
+  @Override public void disconnect() {
     try {
       graphite.close();
     }
@@ -81,12 +113,22 @@ public class GraphiteAdapter {
     }
   }
 
-  public void appendToSendBuffer(String metricPath, String value, long timestamp) {
+
+  @Override public void emptyBuffer() {
+    return;
+  }
+
+
+
+  @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();
       }
-      graphite.send(metricPath, value, timestamp);
+
+      for (String key : metrics.keySet()) {
+        graphite.send(prefix + "." + key, GraphiteCodec.format(metrics.get(key)), timestamp);
+      }
     }
     catch (IOException e) {
       handleFailedSend(e);
@@ -94,9 +136,12 @@ public class GraphiteAdapter {
     catch (NullPointerException npe) {
       handleFailedSend(npe);
     }
+    catch (NumberFormatException nfe) {
+      handleFailedSend(nfe);
+    }
   }
 
-  public void flushSendBuffer() throws IOException {
+  @Override public void sendBufferContents() throws IOException {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();
@@ -119,7 +164,7 @@ public class GraphiteAdapter {
         this.disconnect();
         this.connect();
       }
-      catch (GraphiteConnectionAttemptFailure cf) {
+      catch (ConnectionFailureException cf) {
         //Do nothing, error already logged in connect()
       }
     }
@@ -139,7 +184,7 @@ public class GraphiteAdapter {
    *
    * @return the number of failed writes to the Graphite server
    */
-  public int getFailures() {
+  @Override public long getFailures() {
     return graphite.getFailures();
   }
 

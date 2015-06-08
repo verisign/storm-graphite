@@ -18,15 +18,16 @@ import backtype.storm.metric.api.IMetricsConsumer;
 import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.graphite.GraphiteAdapter;
-import com.verisign.storm.metrics.graphite.GraphiteCodec;
-import com.verisign.storm.metrics.graphite.GraphiteConnectionAttemptFailure;
+import com.verisign.storm.metrics.graphite.ConnectionFailureException;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,9 +35,11 @@ import java.util.Map;
  *
  * To use, add this to your topology's configuration:
  *
+ * To report to a Graphite endpoint:
  * <pre>
  * {@code
  *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.GraphiteReporter");
  *   conf.put("metrics.graphite.host", "<GRAPHITE HOSTNAME>");
  *   conf.put("metrics.graphite.port", "<GRAPHITE PORT>");
  *   conf.put("metrics.graphite.prefix", "<DOT DELIMITED PREFIX>");
@@ -45,46 +48,66 @@ import java.util.Map;
  * }
  * </pre>
  *
+ * To report to a Kafka endpoint:
+ * <pre>
+ * {@code
+ *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.KafkaReporter");
+ *   conf.put("metrics.graphite.prefix", "storm.cluster.metrics");
+ *   conf.put("metrics.kafka.topic", "graphingMetrics");
+ *   conf.put("metrics.kafka.metadata.broker.list", "kafka1.example.com:9092,kafka2.example.com:9092");
+ * }
+ * </pre>  
+ *
+ *
  * Or edit the storm.yaml config file:
  *
+ * To report to a Graphite endpoint: 
  * <pre>
  * {@code
  *   topology.metrics.consumer.register:
- *     - class: "backtype.storm.metrics.GraphiteMetricsConsumer"
+ *     - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *       parallelism.hint: 1
- *   metrics.graphite.host: "<GRAPHITE HOSTNAME>"
- *   metrics.graphite.port: "<GRAPHITE PORT>"
- *   metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
- *   metrics.graphite.min-connect-attempt-interval-secs: "5"
+ *       argument:
+ *         metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
+ *         metrics.graphite.host: "<GRAPHITE HOSTNAME>"
+ *         metrics.graphite.port: "<GRAPHITE PORT>"
+ *         metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
+ *         metrics.graphite.min-connect-attempt-interval-secs: "5"
  * }
  * </pre>
+ *
+ * To report to a Kafka endpoint:
+ * <pre>
+ * {@code
+ *  topology.metrics.consumer.register:
+ *    - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
+ *      parallelism.hint: 1
+ *      argument:      
+ *        metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+ *        metrics.graphite.prefix: "storm.cluster.metrics"
+ *        metrics.kafka.topic: "graphingMetrics"
+ *        metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
+ * }
+ * </pre> 
+ *
+
  */
 public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
-  private static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
-  private static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
-  private static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
-  private static final String GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION =
-      "metrics.graphite.min-connect-attempt-interval-secs";
+  public static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
+  public static final String REPORTER_NAME = "metrics.reporter.name";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
+  private static final String DEFAULT_PREFIX = "metrics";
 
-  private String graphiteHost;
-  private int graphitePort;
   private String graphitePrefix;
-  private int graphiteMinConnectAttemptIntervalSecs;
   private String stormId;
-  private GraphiteAdapter graphite;
+  private Map reporterConfig;
+
+  protected AbstractReporter adapter;
 
   protected String getStormId() {
     return stormId;
-  }
-
-  protected String getGraphiteHost() {
-    return graphiteHost;
-  }
-
-  protected int getGraphitePort() {
-    return graphitePort;
   }
 
   protected String getGraphitePrefix() {
@@ -93,38 +116,47 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
   @Override
   public void prepare(Map config, Object registrationArgument, TopologyContext context, IErrorReporter errorReporter) {
-    configureGraphite(config);
 
+    Map configMap = new HashMap();
+    configMap.putAll(config);
     if (registrationArgument instanceof Map) {
-      configureGraphite((Map) registrationArgument);
+      configMap.putAll((Map) registrationArgument);
+    }
+    reporterConfig = configMap;
+
+    if (reporterConfig.containsKey(GRAPHITE_PREFIX_OPTION)) {
+      graphitePrefix = (String) reporterConfig.get(GRAPHITE_PREFIX_OPTION);
+    }
+    else {
+      graphitePrefix = DEFAULT_PREFIX;
+    }
+
+    try {
+      adapter = configureAdapter(reporterConfig);
+    }
+    catch (Exception e) {
+      LOG.error("Error configuring metrics adapter:" + e.getMessage());
+      errorReporter.reportError(e);
     }
 
     stormId = context.getStormId();
   }
 
-  private void configureGraphite(@SuppressWarnings("rawtypes") Map conf) {
-    if (conf.containsKey(GRAPHITE_HOST_OPTION)) {
-      graphiteHost = (String) conf.get(GRAPHITE_HOST_OPTION);
-    }
+  private AbstractReporter configureAdapter(@SuppressWarnings("rawtypes") Map reporterConfig)
+      throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
+      InvocationTargetException {
+    String className = (String) reporterConfig.get(REPORTER_NAME);
+    Class reporterClass = Class.forName(className);
+    Constructor ctor = reporterClass.getConstructor(Map.class);
+    AbstractReporter reporter = (AbstractReporter) ctor.newInstance(reporterConfig);
 
-    if (conf.containsKey(GRAPHITE_PORT_OPTION)) {
-      graphitePort = Integer.parseInt((String) conf.get(GRAPHITE_PORT_OPTION));
-    }
-
-    if (conf.containsKey(GRAPHITE_PREFIX_OPTION)) {
-      graphitePrefix = (String) conf.get(GRAPHITE_PREFIX_OPTION);
-    }
-
-    if (conf.containsKey(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION)) {
-      graphiteMinConnectAttemptIntervalSecs =
-          Integer.parseInt((String) conf.get(GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION));
-    }
+    return reporter;
   }
 
   @Override @SuppressWarnings("unchecked")
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
-    
+    emptyBuffer();
     String metricPrefix = constructMetricPrefix(graphitePrefix, taskInfo);
 
     for (DataPoint dataPoint : dataPoints) {
@@ -136,25 +168,37 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
           dataPoint.name.equalsIgnoreCase("__recv-iconnection")) {
         continue;
       }
-      
+
       // Most data points contain a Map as a value.
       if (dataPoint.value instanceof Map) {
-        Map<String, Object> m = (Map<String, Object>) dataPoint.value;
-        if (!m.isEmpty()) {
-          for (String key : m.keySet()) {
-            String value = GraphiteCodec.format(m.get(key));
-            String metricPath = metricPrefix.concat(dataPoint.name).concat(".").concat(key);
-            sendToGraphite(metricPath, value, taskInfo.timestamp);
+        Map<String, Object> dataMap = (Map<String, Object>) dataPoint.value;
+        Map<String, Double> bufferMap = new HashMap<String, Double>();
+
+        for (String key : dataMap.keySet()) {
+          if (dataMap.get(key) instanceof Number) {
+            bufferMap.put(key, ((Number) dataMap.get(key)).doubleValue());
+          }
+          else {
+            LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
+                dataMap.get(key).getClass().getName());
           }
         }
+
+        appendToBuffer(metricPrefix, bufferMap, taskInfo.timestamp);
+      }
+
+      else if (dataPoint.value instanceof Number) {
+        Double dblValue = ((Number) dataPoint.value).doubleValue();
+        HashMap<String, Double> metric = new HashMap<String, Double>();
+        metric.put(dataPoint.name + "value", dblValue);
+        appendToBuffer(metricPrefix, metric, taskInfo.timestamp);
       }
       else {
-        String value = GraphiteCodec.format(dataPoint.value);
-        String metricPath = metricPrefix.concat(".").concat(dataPoint.name).concat(".value");
-        sendToGraphite(metricPath, value, taskInfo.timestamp);
+        LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
+            dataPoint.value.getClass().getName());
       }
     }
-    flush();
+    sendMetrics();
     graphiteDisconnect();
   }
 
@@ -174,7 +218,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     sb.append(taskInfo.srcComponentId).append(".");
     sb.append(taskInfo.srcWorkerHost).append(".");
     sb.append(taskInfo.srcWorkerPort).append(".");
-    sb.append(taskInfo.srcTaskId).append(".");
+    sb.append(taskInfo.srcTaskId);
     return sb.toString();
   }
 
@@ -186,40 +230,48 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   }
 
   protected void graphiteConnect() {
-    graphite = new GraphiteAdapter(new InetSocketAddress(graphiteHost, graphitePort),
-        graphiteMinConnectAttemptIntervalSecs);
     try {
-      graphite.connect();
+      adapter.connect();
     }
-    catch (GraphiteConnectionAttemptFailure e) {
+    catch (ConnectionFailureException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      LOG.error("Could not connect to Graphite server " + graphite.getServerFingerprint() + ": " + trace);
+      LOG.error("Could not connect to adapter backend " + adapter.getBackendFingerprint() + ": " + trace);
     }
   }
 
-  protected void sendToGraphite(String metricPath, String value, long timestamp) {
-    if (graphite != null ) {
-      graphite.appendToSendBuffer(metricPath, value, timestamp);
+  protected void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
+    if (adapter != null) {
+      adapter.appendToBuffer(prefix, metrics, timestamp);
     }
   }
 
-  protected void flush() {
+  protected void emptyBuffer() {
+    adapter.emptyBuffer();
+  }
+
+  protected void sendMetrics() {
     try {
-      if (graphite != null) {
-        graphite.flushSendBuffer();
+      if (adapter != null) {
+        adapter.sendBufferContents();
       }
     }
     catch (IOException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      String msg = "Could not send metrics update to Graphite server " + graphite.getServerFingerprint() + ": " + trace +
-          " (" + graphite.getFailures() + " failed attempts so far)";
+      String msg = "Could not send metrics update to backend server " + adapter.getBackendFingerprint() + ": " + trace +
+          " (" + adapter.getFailures() + " failed attempts so far)";
       LOG.error(msg);
     }
   }
 
   protected void graphiteDisconnect() {
-    if (graphite != null) {
-      graphite.disconnect();
+    if (adapter != null) {
+      try {
+        adapter.disconnect();
+      }
+      catch (ConnectionFailureException e) {
+        String trace = Throwables.getStackTraceAsString(e);
+        LOG.error("Could not disconnect from adapter backend " + adapter.getBackendFingerprint() + ": " + trace);
+      }
     }
   }
 

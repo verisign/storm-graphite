@@ -17,6 +17,8 @@ package com.verisign.storm.metrics.graphite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
+
 import static org.fest.assertions.api.Assertions.assertThat;
 
 public class GraphiteCodecTest {
@@ -102,7 +104,7 @@ public class GraphiteCodecTest {
 
   @Test
   public void readInvalidClassAndReturnNull() {
-    String actualOutput = GraphiteCodec.format("Invalid object");
+    String actualOutput = GraphiteCodec.format(new HashMap<String, Object>());
     assertThat(actualOutput).isNull();
   }
 }
