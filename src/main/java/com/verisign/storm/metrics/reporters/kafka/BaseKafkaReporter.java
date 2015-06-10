@@ -55,6 +55,8 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
   }
 
   @Override public void prepare(Map<String, Object> conf) {
+    LOG.info(conf.toString());
+    
     if (conf.containsKey(KAFKA_TOPIC_NAME_FIELD)) {
       kafkaTopicName = (String) conf.get(KAFKA_TOPIC_NAME_FIELD);
       conf.remove(KAFKA_TOPIC_NAME_FIELD);
@@ -76,8 +78,10 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
     }
 
     Properties producerProps = new Properties();
-    for (String key : ((Map<String, Object>) conf).keySet()) {
-      producerProps.setProperty(key, (String) conf.get(key));
+    for (String key : conf.keySet()) {
+      if (conf.get(key) != null) {
+        producerProps.setProperty(key, conf.get(key).toString());
+      }
     }
 
     kafkaProducer = configureKafkaProducer(producerProps);

@@ -142,11 +142,24 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   @Override
   public void prepare(Map config, Object registrationArgument, TopologyContext context, IErrorReporter errorReporter) {
 
-    Map configMap = new HashMap();
-    configMap.putAll(config);
-    if (registrationArgument instanceof Map) {
+    Map configMap = new HashMap<Object, Object>();
+    if (config != null) {
+      LOG.info("Configuration parameter: {}", config.toString());
+      configMap.putAll(config);
+    }
+    else {
+      LOG.warn("No reference to configuration parameter config found: {}", config.toString());
+    }
+
+    if (registrationArgument != null && registrationArgument instanceof Map) {
+      LOG.info("Registration argument: {}", registrationArgument.toString());
       configMap.putAll((Map) registrationArgument);
     }
+    else {
+      LOG.warn("No reference to configuration parameter registrationArgument found: {}",
+          registrationArgument.toString());
+    }
+    
     reporterConfig = configMap;
 
     if (reporterConfig.containsKey(GRAPHITE_PREFIX_OPTION)) {

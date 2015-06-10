@@ -237,6 +237,8 @@ public class BaseKafkaReporterTest {
     HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
     reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
     reporterConfig.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, destinationTopic);
+    reporterConfig.put("parallelism.hint", 1);
+    reporterConfig.put("some.value.that.is.null", null);
 
     schemaRegistryClient = new LocalSchemaRegistryClient();
     try {
@@ -265,6 +267,8 @@ public class BaseKafkaReporterTest {
     HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
     reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
     reporterConfig.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, destinationTopic);
+    reporterConfig.put("parallelism.hint", 1);
+    reporterConfig.put("some.value.that.is.null", null);
 
     kafkaReporter = new BaseKafkaReporter() {
       @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
