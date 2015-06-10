@@ -43,7 +43,6 @@ public class GraphiteMetricsConsumerTest {
   private Integer testStormSrcTaskId = 3008;
 
   private String testTopologyName = "Example-Storm-Topology-Name-13-1425495763";
-  private String testReporterName = "com.verisign.storm.metrics.reporters.GraphiteReporter";
   private String testGraphiteHost = "127.0.0.1";
   private String testGraphitePort = "2003";
   private String testPrefix = "unittest";
@@ -56,8 +55,8 @@ public class GraphiteMetricsConsumerTest {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put("metrics.graphite.host", testGraphiteHost);
-    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, testReporterName);
-
+    stormConfig
+        .put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put("metrics.graphite.port", testGraphitePort);
@@ -74,15 +73,16 @@ public class GraphiteMetricsConsumerTest {
     verify(topologyContext).getStormId();
     assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
-    assertThat(consumer.adapter).isInstanceOf(GraphiteReporter.class);
-    assertThat(consumer.adapter).isNotNull();
+    assertThat(consumer.reporter).isInstanceOf(GraphiteReporter.class);
+    assertThat(consumer.reporter).isNotNull();
   }
 
   @Test public void shouldInitializeKafkaReporter() {
     // Given a Kafka configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, "127.0.0.1:9092");
-    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.KafkaReporter");
+    stormConfig
+        .put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
@@ -99,8 +99,8 @@ public class GraphiteMetricsConsumerTest {
     verify(topologyContext).getStormId();
     assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
-    assertThat(consumer.adapter).isInstanceOf(BaseKafkaReporter.class);
-    assertThat(consumer.adapter).isNotNull();
+    assertThat(consumer.reporter).isInstanceOf(BaseKafkaReporter.class);
+    assertThat(consumer.reporter).isNotNull();
 
   }
 
@@ -109,7 +109,8 @@ public class GraphiteMetricsConsumerTest {
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
     Map stormConf = ImmutableMap
         .of("metrics.graphite.host", testGraphiteHost, "metrics.graphite.port", testGraphitePort,
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name", testReporterName);
+            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
+            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);
@@ -136,7 +137,8 @@ public class GraphiteMetricsConsumerTest {
 
     Map stormConf = ImmutableMap
         .of("metrics.graphite.host", testStormSrcWorkerHost, "metrics.graphite.port", testStormSrcWorkerPort.toString(),
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name", testReporterName);
+            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
+            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
     Object obj = mock(Object.class);
 
     TopologyContext context = mock(TopologyContext.class);
@@ -161,7 +163,8 @@ public class GraphiteMetricsConsumerTest {
 
     Map stormConf = ImmutableMap
         .of("metrics.graphite.host", testStormSrcWorkerHost, "metrics.graphite.port", testStormSrcWorkerPort.toString(),
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name", testReporterName);
+            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
+            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
     Object obj = mock(Object.class);
 
     TopologyContext context = mock(TopologyContext.class);
@@ -186,7 +189,8 @@ public class GraphiteMetricsConsumerTest {
 
     Map stormConf = ImmutableMap
         .of("metrics.graphite.host", testStormSrcWorkerHost, "metrics.graphite.port", testStormSrcWorkerPort.toString(),
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name", testReporterName);
+            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
+            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Object obj = mock(Object.class);
     TopologyContext context = mock(TopologyContext.class);

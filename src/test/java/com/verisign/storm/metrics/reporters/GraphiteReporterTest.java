@@ -38,7 +38,7 @@ public class GraphiteReporterTest {
   private String graphiteHost;
   private Integer graphitePort;
   private InetSocketAddress graphiteSocketAddress;
-  private GraphiteReporter testAdapter;
+  private GraphiteReporter graphiteReporter;
   private SocketChannel socketChannel;
 
   private final Charset DEFAULT_CHARSET = Charsets.UTF_8;
@@ -61,13 +61,14 @@ public class GraphiteReporterTest {
   }
 
   private void launchGraphiteClient() throws ConnectionFailureException {
-    HashMap<String, Object> config = new HashMap<String, Object>();
+    HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
 
-    config.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteHost);
-    config.put(GraphiteReporter.GRAPHITE_PORT_OPTION, graphitePort.toString());
+    reporterConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteHost);
+    reporterConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, graphitePort.toString());
 
-    testAdapter = new GraphiteReporter(config);
-    testAdapter.connect();
+    graphiteReporter = new GraphiteReporter();
+    graphiteReporter.prepare(reporterConfig);
+    graphiteReporter.connect();
   }
 
   private void acceptClientConnection() throws IOException {
@@ -79,7 +80,7 @@ public class GraphiteReporterTest {
     if (graphiteServer != null && graphiteServer.isOpen()) {
       graphiteServer.close();
     }
-    testAdapter.disconnect();
+    graphiteReporter.disconnect();
   }
 
   @DataProvider(name = "metrics")
@@ -104,9 +105,9 @@ public class GraphiteReporterTest {
 
     HashMap<String, Double> values = new HashMap<String, Double>();
     values.put(metricKey, value);
-    // When the adapter sends the metric
-    testAdapter.appendToBuffer(metricPrefix, values, timestamp);
-    testAdapter.sendBufferContents();
+    // When the reporter sends the metric
+    graphiteReporter.appendToBuffer(metricPrefix, values, timestamp);
+    graphiteReporter.sendBufferContents();
 
     // Then the server should receive a properly formatted string representing the metric
     ByteBuffer receive = ByteBuffer.allocate(1024);

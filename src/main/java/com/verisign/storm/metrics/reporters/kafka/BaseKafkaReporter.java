@@ -50,9 +50,11 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
 
   private int failures;
 
-  public BaseKafkaReporter(Map conf) {
-    super(conf);
+  public BaseKafkaReporter() {
+    super();
+  }
 
+  @Override public void prepare(Map<String, Object> conf) {
     if (conf.containsKey(KAFKA_TOPIC_NAME_FIELD)) {
       kafkaTopicName = (String) conf.get(KAFKA_TOPIC_NAME_FIELD);
       conf.remove(KAFKA_TOPIC_NAME_FIELD);

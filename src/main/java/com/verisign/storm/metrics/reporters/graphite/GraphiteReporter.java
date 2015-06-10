@@ -44,14 +44,16 @@ public class GraphiteReporter extends AbstractReporter {
   private int graphitePort;
   private InetSocketAddress graphiteSocketAddr;
 
-  private final String serverFingerprint;
-  private final int minConnectAttemptIntervalSecs;
-  private final Graphite graphite;
+  private String serverFingerprint;
+  private int minConnectAttemptIntervalSecs;
+  private Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
-  public GraphiteReporter(Map<String, Object> conf) {
-    super(conf);
+  public GraphiteReporter() {
+    super();
+  }
 
+  @Override public void prepare(Map<String, Object> conf) {
     if (conf.containsKey(GRAPHITE_HOST_OPTION)) {
       graphiteHost = (String) conf.get(GRAPHITE_HOST_OPTION);
     }
@@ -79,8 +81,9 @@ public class GraphiteReporter extends AbstractReporter {
     serverFingerprint = graphiteSocketAddr.getAddress() + ":" + graphiteSocketAddr.getPort();
     this.graphite = new Graphite(graphiteSocketAddr);
     lastConnectAttemptTimestampMs = 0;
-
   }
+
+
 
   @Override public String getBackendFingerprint() {
     return serverFingerprint;

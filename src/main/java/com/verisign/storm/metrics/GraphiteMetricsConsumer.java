@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -104,7 +103,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   private String stormId;
   private Map reporterConfig;
 
-  protected AbstractReporter adapter;
+  protected AbstractReporter reporter;
 
   protected String getStormId() {
     return stormId;
@@ -132,24 +131,24 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
 
     try {
-      adapter = configureAdapter(reporterConfig);
+      reporter = configureReporter(reporterConfig);
     }
     catch (Exception e) {
-      LOG.error("Error configuring metrics adapter:" + e.getMessage());
+      LOG.error("Error configuring metrics reporter:" + e.getMessage());
       errorReporter.reportError(e);
     }
 
     stormId = context.getStormId();
   }
 
-  private AbstractReporter configureAdapter(@SuppressWarnings("rawtypes") Map reporterConfig)
+  private AbstractReporter configureReporter(@SuppressWarnings("rawtypes") Map reporterConfig)
       throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
       InvocationTargetException {
     String className = (String) reporterConfig.get(REPORTER_NAME);
     Class reporterClass = Class.forName(className);
-    Constructor ctor = reporterClass.getConstructor(Map.class);
-    AbstractReporter reporter = (AbstractReporter) ctor.newInstance(reporterConfig);
-
+    AbstractReporter reporter = (AbstractReporter) reporterClass.newInstance();
+    reporter.prepare(reporterConfig);
+    
     return reporter;
   }
 
@@ -231,46 +230,47 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
   protected void graphiteConnect() {
     try {
-      adapter.connect();
+      reporter.connect();
     }
     catch (ConnectionFailureException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      LOG.error("Could not connect to adapter backend " + adapter.getBackendFingerprint() + ": " + trace);
+      LOG.error("Could not connect to reporter backend " + reporter.getBackendFingerprint() + ": " + trace);
     }
   }
 
   protected void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
-    if (adapter != null) {
-      adapter.appendToBuffer(prefix, metrics, timestamp);
+    if (reporter != null) {
+      reporter.appendToBuffer(prefix, metrics, timestamp);
     }
   }
 
   protected void emptyBuffer() {
-    adapter.emptyBuffer();
+    reporter.emptyBuffer();
   }
 
   protected void sendMetrics() {
     try {
-      if (adapter != null) {
-        adapter.sendBufferContents();
+      if (reporter != null) {
+        reporter.sendBufferContents();
       }
     }
     catch (IOException e) {
       String trace = Throwables.getStackTraceAsString(e);
-      String msg = "Could not send metrics update to backend server " + adapter.getBackendFingerprint() + ": " + trace +
-          " (" + adapter.getFailures() + " failed attempts so far)";
+      String msg = "Could not send metrics update to backend server " + reporter.getBackendFingerprint() + ": " + trace
+          +
+          " (" + reporter.getFailures() + " failed attempts so far)";
       LOG.error(msg);
     }
   }
 
   protected void graphiteDisconnect() {
-    if (adapter != null) {
+    if (reporter != null) {
       try {
-        adapter.disconnect();
+        reporter.disconnect();
       }
       catch (ConnectionFailureException e) {
         String trace = Throwables.getStackTraceAsString(e);
-        LOG.error("Could not disconnect from adapter backend " + adapter.getBackendFingerprint() + ": " + trace);
+        LOG.error("Could not disconnect from reporter backend " + reporter.getBackendFingerprint() + ": " + trace);
       }
     }
   }

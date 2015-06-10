@@ -7,9 +7,11 @@ import java.util.Map;
 
 public abstract class AbstractReporter {
 
-  public AbstractReporter(Map<String, Object> conf) {
+  public AbstractReporter() {
   }
 
+  public abstract void prepare(Map<String, Object> conf);
+  
   public abstract void connect() throws ConnectionFailureException;
 
   public abstract void disconnect() throws ConnectionFailureException;

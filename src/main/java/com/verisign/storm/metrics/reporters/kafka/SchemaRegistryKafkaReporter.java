@@ -4,7 +4,6 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
-import java.util.Map;
 import java.util.Properties;
 
 public class SchemaRegistryKafkaReporter extends BaseKafkaReporter {
@@ -12,8 +11,8 @@ public class SchemaRegistryKafkaReporter extends BaseKafkaReporter {
   String KAFKA_SCHEMA_REGISTRY_URL_FIELD = "metrics.kafka.schema.registry.url";
   String KAFKA_SCHEMA_REGISTRY_IDENTITY_MAP_CAPACITY_FIELD = "metrics.kafka.schema.registry.id.capacity";
 
-  public SchemaRegistryKafkaReporter(Map conf) {
-    super(conf);
+  public SchemaRegistryKafkaReporter() {
+    super();
   }
 
   @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
