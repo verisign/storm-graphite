@@ -67,7 +67,7 @@ import java.util.Map;
  *   conf.put("metrics.graphite.prefix", "storm.cluster.metrics");
  *   conf.put("metrics.kafka.topic", "graphingMetrics");
  *   conf.put("metrics.kafka.metadata.broker.list", "kafka1.example.com:9092,kafka2.example.com:9092");
- *   conf.put("metrics.kafka.schema.registry.url", "schemaregistry.example.com:8081");
+ *   conf.put("metrics.kafka.schema.registry.url", "http://schemaregistry.example.com:8081");
  * }
  * </pre>   
  *
@@ -114,7 +114,7 @@ import java.util.Map;
  *        metrics.graphite.prefix: "storm.cluster.metrics"
  *        metrics.kafka.topic: "graphingMetrics"
  *        metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
- *        metrics.kafka.schema.registry.url: "schemaregistry.example.com:8081"
+ *        metrics.kafka.schema.registry.url: "http://schemaregistry.example.com:8081"
  * }
  * </pre>
  */

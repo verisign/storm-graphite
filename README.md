@@ -286,7 +286,7 @@ topology.metrics.consumer.register:
 	  metrics.kafka.topic: "metricsTopic"
 	  metrics.kafka.metadata.broker.list: "broker1.example.com:9092,broker2.example.com:9092,broker3.example.com:9092"
 	  # Optional arguments can also be supplied to integrate with Confluent's Schema Registry
-	  metrics.kafka.schema.registry.url: "schemaregistry.example.com:8081"
+	  metrics.kafka.schema.registry.url: "http://schemaregistry.example.com:8081"
 	  metrics.kafka.schema.registry.id.capacity: 100
 ```
 
