@@ -220,7 +220,6 @@ shadowJar {
     include(dependency("io.dropwizard.metrics:metrics-core:${metricsVersion}"))
     include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
   }
-
 }
 
 // `build` should also create the uber/shadow jar by default.

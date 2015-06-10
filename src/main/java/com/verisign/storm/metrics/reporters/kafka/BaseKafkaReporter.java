@@ -40,7 +40,7 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
   private static final Logger LOG = LoggerFactory.getLogger(BaseKafkaReporter.class);
   public static final String KAFKA_TOPIC_NAME_FIELD = "metrics.kafka.topic";
   public static final String KAFKA_BROKER_LIST_FIELD = "metrics.kafka.metadata.broker.list";
-  public static final String BOOTSTRAP_SERVERS = "bootstrap.servers";
+  public static final String KAFKA_PRODUCER_BOOTSTRAP_SERVERS_FIELD = "bootstrap.servers";
 
   private String kafkaTopicName;
   private String kafkaBrokerList;
@@ -66,10 +66,10 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
     if (conf.containsKey(KAFKA_BROKER_LIST_FIELD)) {
       kafkaBrokerList = (String) conf.get(KAFKA_BROKER_LIST_FIELD);
       conf.remove(KAFKA_BROKER_LIST_FIELD);
-      conf.put(BOOTSTRAP_SERVERS, kafkaBrokerList);
+      conf.put(KAFKA_PRODUCER_BOOTSTRAP_SERVERS_FIELD, kafkaBrokerList);
     }
-    else if (conf.containsKey(BOOTSTRAP_SERVERS)) {
-      kafkaBrokerList = (String) conf.get(BOOTSTRAP_SERVERS);
+    else if (conf.containsKey(KAFKA_PRODUCER_BOOTSTRAP_SERVERS_FIELD)) {
+      kafkaBrokerList = (String) conf.get(KAFKA_PRODUCER_BOOTSTRAP_SERVERS_FIELD);
     }
     else {
       throw new IllegalArgumentException("Field " + KAFKA_BROKER_LIST_FIELD + " required.");

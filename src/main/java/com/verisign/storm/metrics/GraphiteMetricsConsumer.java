@@ -35,10 +35,11 @@ import java.util.Map;
  * To use, add this to your topology's configuration:
  *
  * To report to a Graphite endpoint:
+ *
  * <pre>
  * {@code
  *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
- *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.GraphiteReporter");
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
  *   conf.put("metrics.graphite.host", "<GRAPHITE HOSTNAME>");
  *   conf.put("metrics.graphite.port", "<GRAPHITE PORT>");
  *   conf.put("metrics.graphite.prefix", "<DOT DELIMITED PREFIX>");
@@ -47,16 +48,28 @@ import java.util.Map;
  * }
  * </pre>
  *
- * To report to a Kafka endpoint:
+ * To report Avro-encoded metrics to a Kafka endpoint:
  * <pre>
  * {@code
  *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
- *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.KafkaReporter");
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter");
  *   conf.put("metrics.graphite.prefix", "storm.cluster.metrics");
  *   conf.put("metrics.kafka.topic", "graphingMetrics");
  *   conf.put("metrics.kafka.metadata.broker.list", "kafka1.example.com:9092,kafka2.example.com:9092");
  * }
- * </pre>  
+ * </pre>
+ *
+ * To report Avro-encoded metrics to a Confluent Schema-Registry enabled Kafka endpoint:
+ * <pre>
+ * {@code
+ *   conf.registerMetricsConsumer(com.verisign.storm.metrics.GraphiteMetricsConsumer.class, 1);
+ *   conf.put("metrics.reporter.name", "com.verisign.storm.metrics.reporters.kafka.SchemaRegistryKafkaReporter");
+ *   conf.put("metrics.graphite.prefix", "storm.cluster.metrics");
+ *   conf.put("metrics.kafka.topic", "graphingMetrics");
+ *   conf.put("metrics.kafka.metadata.broker.list", "kafka1.example.com:9092,kafka2.example.com:9092");
+ *   conf.put("metrics.kafka.schema.registry.url", "schemaregistry.example.com:8081");
+ * }
+ * </pre>   
  *
  *
  * Or edit the storm.yaml config file:
@@ -68,7 +81,7 @@ import java.util.Map;
  *     - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *       parallelism.hint: 1
  *       argument:
- *         metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
+ *         metrics.reporter.name: "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter"
  *         metrics.graphite.host: "<GRAPHITE HOSTNAME>"
  *         metrics.graphite.port: "<GRAPHITE PORT>"
  *         metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
@@ -76,21 +89,34 @@ import java.util.Map;
  * }
  * </pre>
  *
- * To report to a Kafka endpoint:
+ * To report Avro-encoded metrics to a Kafka endpoint:
  * <pre>
  * {@code
  *  topology.metrics.consumer.register:
  *    - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *      parallelism.hint: 1
  *      argument:      
- *        metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+ *        metrics.reporter.name: "com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter"
  *        metrics.graphite.prefix: "storm.cluster.metrics"
  *        metrics.kafka.topic: "graphingMetrics"
  *        metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
  * }
  * </pre> 
  *
-
+ * To report Avro-encoded metrics to a Confluent Schema-Registry enabled Kafka endpoint:
+ * <pre>
+ * {@code
+ *  topology.metrics.consumer.register:
+ *    - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
+ *      parallelism.hint: 1
+ *      argument:
+ *        metrics.reporter.name: "com.verisign.storm.metrics.reporters.kafka.SchemaRegistryKafkaReporter"
+ *        metrics.graphite.prefix: "storm.cluster.metrics"
+ *        metrics.kafka.topic: "graphingMetrics"
+ *        metrics.kafka.metadata.broker.list: "kafka1.example.com:9092,kafka2.example.com:9092"
+ *        metrics.kafka.schema.registry.url: "schemaregistry.example.com:8081"
+ * }
+ * </pre>
  */
 public class GraphiteMetricsConsumer implements IMetricsConsumer {
 

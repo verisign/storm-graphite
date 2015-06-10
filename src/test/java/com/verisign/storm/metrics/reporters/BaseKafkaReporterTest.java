@@ -52,9 +52,9 @@ import java.util.*;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 
-public class KafkaReporterTest {
+public class BaseKafkaReporterTest {
   private static final int TEST_COUNT = 10;
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaReporterTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaseKafkaReporterTest.class);
 
   private static final Integer ZOOKEEPER_PORT = 2181;
   private static final String ZOOKEEPER_HOST = "127.0.0.1";
