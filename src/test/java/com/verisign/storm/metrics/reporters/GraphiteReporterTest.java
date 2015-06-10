@@ -15,7 +15,8 @@
 package com.verisign.storm.metrics.reporters;
 
 import com.google.common.base.Charsets;
-import com.verisign.storm.metrics.graphite.ConnectionFailureException;
+import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;

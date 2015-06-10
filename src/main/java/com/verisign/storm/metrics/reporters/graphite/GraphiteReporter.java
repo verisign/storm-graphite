@@ -12,12 +12,13 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.reporters;
+package com.verisign.storm.metrics.reporters.graphite;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.graphite.ConnectionFailureException;
-import com.verisign.storm.metrics.graphite.GraphiteCodec;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
+import com.verisign.storm.metrics.util.GraphiteCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -12,7 +12,7 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.graphite;
+package com.verisign.storm.metrics.util;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

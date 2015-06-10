@@ -15,6 +15,12 @@
 package com.verisign.storm.metrics.reporters;
 
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
+import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
+import com.verisign.storm.metrics.serializers.AvroRecordSerializer;
+import io.confluent.kafka.schemaregistry.client.LocalSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.serializers.KafkaAvroDecoder;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.javaapi.FetchResponse;
@@ -23,11 +29,14 @@ import kafka.message.MessageAndOffset;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.curator.test.TestingServer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -53,13 +62,12 @@ public class KafkaReporterTest {
   private static final String KAFKA_HOST = "127.0.0.1";
   private static final Integer KAFKA_PORT = 9092;
   private static final String KAFKA_BROKER_LIST = KAFKA_HOST + ":" + KAFKA_PORT;
-  private static final String KAFKA_TOPIC = "testTopic";
 
-  KafkaServerStartable kafkaServer;
-  TestingServer zookeeper;
-  KafkaReporter kafkaAdapter;
-  SimpleConsumer kafkaConsumer;
-
+  private String destinationTopic;
+  private KafkaServerStartable kafkaServer;
+  private TestingServer zookeeper;
+  private BaseKafkaReporter kafkaReporter;
+  private LocalSchemaRegistryClient schemaRegistryClient;
 
   private Properties getBrokerConfig() {
     Properties props = new Properties();
@@ -75,13 +83,6 @@ public class KafkaReporterTest {
   }
 
   @BeforeClass private void initializeCluster() {
-    HashMap<String, Object> config = new HashMap<String, Object>();
-    config.put(KafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
-    config.put(KafkaReporter.KAFKA_TOPIC_NAME_FIELD, KAFKA_TOPIC);
-
-    kafkaAdapter = new KafkaReporter(config);
-    kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "client1");
-
     try {
       zookeeper = new TestingServer(ZOOKEEPER_PORT);
     }
@@ -92,6 +93,48 @@ public class KafkaReporterTest {
     KafkaConfig kafkaConfig = new KafkaConfig(getBrokerConfig());
     kafkaServer = new KafkaServerStartable(kafkaConfig);
     kafkaServer.startup();
+  }
+
+  private void initializeSchemaRegistryReporter() {
+    destinationTopic = "schemaRegistryDestinationTopic";
+    HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
+    reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
+    reporterConfig.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, destinationTopic);
+
+    schemaRegistryClient = new LocalSchemaRegistryClient();
+    try {
+      schemaRegistryClient.register(destinationTopic + "-key", GraphingMetrics.getClassSchema());
+    }
+    catch (RestClientException e) {
+      LOG.error("Failed to register schema: {}", GraphingMetrics.getClassSchema().toString(true));
+    }
+    catch (IOException e) {
+      LOG.error("Failed to register schema: {}", GraphingMetrics.getClassSchema().toString(true));
+    }
+
+    final KafkaAvroSerializer serializer = new KafkaAvroSerializer(schemaRegistryClient);
+
+    kafkaReporter = new BaseKafkaReporter(reporterConfig) {
+      @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+        return new KafkaProducer<Object, Object>(producerProps, serializer, serializer);
+      }
+    };
+
+
+  }
+
+  private void initializeAvroReporter() {
+    destinationTopic = "avroDestinationTopic";
+    HashMap<String, Object> config = new HashMap<String, Object>();
+    config.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
+    config.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, destinationTopic);
+
+    kafkaReporter = new BaseKafkaReporter(config) {
+      @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+        AvroRecordSerializer serializer = new AvroRecordSerializer();
+        return new KafkaProducer<GenericRecord, GenericRecord>(producerProps, serializer, serializer);
+      }
+    };
   }
 
   @DataProvider(name = "metrics") public Object[][] metricsProvider() {
@@ -123,21 +166,23 @@ public class KafkaReporterTest {
   }
 
   @Test(dataProvider = "metrics")
-  public void kafkaAdapterTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
+  public void avroKafkaReporterTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
       long timestamp) {
-    
+
     /* GIVEN: A Zookeeper instance, a Kafka broker, and a the Kafka adapter we're testing */
+    initializeAvroReporter();
+    SimpleConsumer kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "simpleConsumer");
     
     /* WHEN: A new metric is appended to the adapter's buffer and we tell the adapter to send its data */
     HashMap<String, Double> metrics = new HashMap<String, Double>();
     metrics.put(metricKey, value);
 
-    kafkaAdapter.appendToBuffer(metricPrefix, metrics, timestamp);
+    kafkaReporter.appendToBuffer(metricPrefix, metrics, timestamp);
     try {
-      kafkaAdapter.sendBufferContents();
+      kafkaReporter.sendBufferContents();
 
       // Allow the Kafka server time to commit into its log the message we sent it
-      Thread.sleep(50); 
+      Thread.sleep(50);
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
@@ -146,11 +191,67 @@ public class KafkaReporterTest {
     }
 
     /* WHEN: A Kafka consumer reads the latest message from the same topic on the Kafka server*/
-    FetchRequest fetchRequest = new FetchRequestBuilder().addFetch(KAFKA_TOPIC, 0, 0, 1000000).build();
+    FetchRequest fetchRequest = new FetchRequestBuilder().addFetch(destinationTopic, 0, 0, 1000000).build();
     FetchResponse response = kafkaConsumer.fetch(fetchRequest);
 
-    GraphingMetrics result = null;
-    Iterator<MessageAndOffset> messageSetItr = response.messageSet(KAFKA_TOPIC, 0).iterator();
+    GenericRecord result = null;
+    Iterator<MessageAndOffset> messageSetItr = response.messageSet(destinationTopic, 0).iterator();
+
+    // Fast forward to the message at the latest offset in the topic
+    MessageAndOffset latestMessage = null;
+    while (messageSetItr.hasNext()) {
+      latestMessage = messageSetItr.next();
+    }
+
+        /* WHEN: The latest message is decoded using the supplied Avro schema */
+    ByteBuffer payload = latestMessage.message().payload();
+    byte[] bytes = new byte[payload.limit()];
+    payload.get(bytes);
+
+    try {
+      result = deserialize(bytes, GraphingMetrics.getClassSchema());
+    }
+    catch (IOException e) {
+      fail("Failed to deserialize message:" + e.getMessage());
+    }
+
+    /* THEN: The field values of the decoded record should be the same as those of the input fields. */
+    assertThat(result).isNotNull();
+    assertThat(result.get("prefix")).isEqualTo(metricPrefix);
+    assertThat(result.get("reportTime")).isEqualTo(timestamp);
+    assertThat(((Map) result.get("metricValues")).get(metricKey)).isEqualTo(truncatedValue);
+  }
+
+  @Test(dataProvider = "metrics")
+  public void schemaRegistryKafkaReporterTest(String metricPrefix, String metricKey, Double value,
+      Double truncatedValue,
+      long timestamp) {
+
+    initializeSchemaRegistryReporter();
+    SimpleConsumer kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "simpleConsumer");
+    KafkaAvroDecoder decoder = new KafkaAvroDecoder(schemaRegistryClient);
+
+    HashMap<String, Double> metrics = new HashMap<String, Double>();
+    metrics.put(metricKey, value);
+
+    kafkaReporter.appendToBuffer(metricPrefix, metrics, timestamp);
+    try {
+      kafkaReporter.sendBufferContents();
+
+      // Allow the Kafka server time to commit into its log the message we sent it
+      Thread.sleep(50);
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    catch (InterruptedException e) {
+    }
+
+    FetchRequest fetchRequest = new FetchRequestBuilder().addFetch(destinationTopic, 0, 0, 1000000).build();
+    FetchResponse response = kafkaConsumer.fetch(fetchRequest);
+
+    GenericRecord result = null;
+    Iterator<MessageAndOffset> messageSetItr = response.messageSet(destinationTopic, 0).iterator();
 
     // Fast forward to the message at the latest offset in the topic
     MessageAndOffset latestMessage = null;
@@ -164,16 +265,17 @@ public class KafkaReporterTest {
     payload.get(bytes);
 
     try {
-      result = deserialize(bytes, GraphingMetrics.getClassSchema());
+      result = (GenericRecord) decoder.fromBytes(bytes);
     }
-    catch (IOException e) {
+    catch (SerializationException e) {
       fail("Failed to deserialize message:" + e.getMessage());
     }
 
-    /* THEN: The field values of the decoded record should be the same as those of the input fields. */
-    assertThat(result.getPrefix()).isEqualTo(metricPrefix);
-    assertThat(result.getReportTime()).isEqualTo(timestamp);
-    assertThat(result.getMetricValues().get(metricKey)).isEqualTo(truncatedValue);
+    assertThat(result).isNotNull();
+    assertThat(result.get("prefix")).isEqualTo(metricPrefix);
+    assertThat(result.get("reportTime")).isEqualTo(timestamp);
+    assertThat(((Map) result.get("metricValues")).get(metricKey)).isEqualTo(truncatedValue);
+
   }
 
   @AfterClass private void exitCluster() {
@@ -191,5 +293,4 @@ public class KafkaReporterTest {
     Decoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
     return reader.read(null, decoder);
   }
-
 }

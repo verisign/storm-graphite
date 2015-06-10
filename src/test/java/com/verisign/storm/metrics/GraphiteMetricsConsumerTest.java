@@ -20,8 +20,8 @@ import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.verisign.storm.metrics.reporters.GraphiteReporter;
-import com.verisign.storm.metrics.reporters.KafkaReporter;
+import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
+import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
 import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -81,11 +81,11 @@ public class GraphiteMetricsConsumerTest {
   @Test public void shouldInitializeKafkaReporter() {
     // Given a Kafka configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
-    stormConfig.put(KafkaReporter.KAFKA_BROKER_LIST_FIELD, "127.0.0.1:9092");
+    stormConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, "127.0.0.1:9092");
     stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.KafkaReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
-    registrationArgument.put(KafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
+    registrationArgument.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
     registrationArgument.put("metrics.graphite.prefix", testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);
@@ -99,7 +99,7 @@ public class GraphiteMetricsConsumerTest {
     verify(topologyContext).getStormId();
     assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
-    assertThat(consumer.adapter).isInstanceOf(KafkaReporter.class);
+    assertThat(consumer.adapter).isInstanceOf(BaseKafkaReporter.class);
     assertThat(consumer.adapter).isNotNull();
 
   }

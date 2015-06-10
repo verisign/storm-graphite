@@ -12,24 +12,20 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.reporters;
+package com.verisign.storm.metrics.reporters.kafka;
 
 import com.google.common.base.Throwables;
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
-import com.verisign.storm.metrics.graphite.ConnectionFailureException;
-import com.verisign.storm.metrics.graphite.GraphiteCodec;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.avro.specific.SpecificRecordBase;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
+import com.verisign.storm.metrics.util.GraphiteCodec;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.commons.lang.SerializationException;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,26 +35,27 @@ import java.util.Properties;
 /**
  * This class encapsulates an Apache Kafka producer, sending generated metrics into a configurable Kafka topic.
  */
-public class KafkaReporter extends AbstractReporter {
+public abstract class BaseKafkaReporter extends AbstractReporter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaReporter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaseKafkaReporter.class);
   public static final String KAFKA_TOPIC_NAME_FIELD = "metrics.kafka.topic";
   public static final String KAFKA_BROKER_LIST_FIELD = "metrics.kafka.metadata.broker.list";
-  public static final String KAFKA_METADATA_BROKER_LIST = "metadata.broker.list";
+  public static final String BOOTSTRAP_SERVERS = "bootstrap.servers";
 
   private String kafkaTopicName;
   private String kafkaBrokerList;
   private LinkedList<GraphingMetrics> buffer;
 
-  private Producer<String, byte[]> kafkaProducer;
+  private KafkaProducer kafkaProducer;
 
   private int failures;
 
-  public KafkaReporter(Map conf) {
+  public BaseKafkaReporter(Map conf) {
     super(conf);
 
     if (conf.containsKey(KAFKA_TOPIC_NAME_FIELD)) {
       kafkaTopicName = (String) conf.get(KAFKA_TOPIC_NAME_FIELD);
+      conf.remove(KAFKA_TOPIC_NAME_FIELD);
     }
     else {
       throw new IllegalArgumentException("Field " + KAFKA_TOPIC_NAME_FIELD + " required.");
@@ -66,10 +63,11 @@ public class KafkaReporter extends AbstractReporter {
 
     if (conf.containsKey(KAFKA_BROKER_LIST_FIELD)) {
       kafkaBrokerList = (String) conf.get(KAFKA_BROKER_LIST_FIELD);
-      conf.put(KAFKA_METADATA_BROKER_LIST, kafkaBrokerList);
+      conf.remove(KAFKA_BROKER_LIST_FIELD);
+      conf.put(BOOTSTRAP_SERVERS, kafkaBrokerList);
     }
-    else if (conf.containsKey(KAFKA_METADATA_BROKER_LIST)) {
-      kafkaBrokerList = (String) conf.get(KAFKA_METADATA_BROKER_LIST);
+    else if (conf.containsKey(BOOTSTRAP_SERVERS)) {
+      kafkaBrokerList = (String) conf.get(BOOTSTRAP_SERVERS);
     }
     else {
       throw new IllegalArgumentException("Field " + KAFKA_BROKER_LIST_FIELD + " required.");
@@ -80,10 +78,12 @@ public class KafkaReporter extends AbstractReporter {
       producerProps.setProperty(key, (String) conf.get(key));
     }
 
-    kafkaProducer = new Producer<String, byte[]>(new ProducerConfig(producerProps));
+    kafkaProducer = configureKafkaProducer(producerProps);
     buffer = new LinkedList<GraphingMetrics>();
     failures = 0;
   }
+
+  public abstract KafkaProducer<GenericRecord, GenericRecord> configureKafkaProducer(Properties producerProps);
 
   @Override public void connect() throws ConnectionFailureException {
   }
@@ -118,10 +118,11 @@ public class KafkaReporter extends AbstractReporter {
   @Override public void sendBufferContents() throws IOException {
     for (GraphingMetrics metric : buffer) {
       try {
-        byte[] metricBytes = serialize(metric);
-        kafkaProducer.send(new KeyedMessage<String, byte[]>(kafkaTopicName, metricBytes));
+        ProducerRecord<GenericRecord, GenericRecord> record = new ProducerRecord<GenericRecord, GenericRecord>(
+            kafkaTopicName, metric, metric);
+        kafkaProducer.send(record);
       }
-      catch (IOException e) {
+      catch (SerializationException e) {
         failures++;
 
         //Pass this exception up to the metrics consumer for it to handle
@@ -138,15 +139,4 @@ public class KafkaReporter extends AbstractReporter {
     return kafkaBrokerList;
   }
 
-
-  private <T extends SpecificRecordBase> byte[] serialize(T record) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-
-    DatumWriter<T> writer = new SpecificDatumWriter<T>(record.getSchema());
-    writer.write(record, encoder);
-    encoder.flush();
-    out.close();
-    return out.toByteArray();
-  }
 }
