@@ -22,10 +22,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
-import org.mockito.Mockito;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
 import java.util.*;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -34,6 +40,8 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings("unchecked")
 public class GraphiteMetricsConsumerTest {
 
+  private Logger LOG = org.slf4j.LoggerFactory.getLogger(GraphiteMetricsConsumerTest.class);
+  
   private final Long currentTime = System.currentTimeMillis();
   private final Random rng = new Random(currentTime);
 
@@ -41,15 +49,38 @@ public class GraphiteMetricsConsumerTest {
   private String testStormSrcWorkerHost = "testStormSrcWorkerHost";
   private Integer testStormSrcWorkerPort = 6700;
   private Integer testStormSrcTaskId = 3008;
-
   private String testTopologyName = "Example-Storm-Topology-Name-13-1425495763";
+  private String testPrefix = "testPrefix";
+  
   private String testGraphiteHost = "127.0.0.1";
-  private String testGraphitePort = "2003";
-  private String testPrefix = "unittest";
-
+  private Integer testGraphitePort = 2003;
+  private InetSocketAddress testGraphiteServerSocketAddr;
+  private ServerSocketChannel testGraphiteServer;
+  
   private final GraphiteMetricsConsumer consumer = new GraphiteMetricsConsumer();
   private final TaskInfo taskInfo = new TaskInfo(testStormSrcWorkerHost, testStormSrcWorkerPort, testStormComponentID,
       testStormSrcTaskId, currentTime, 10);
+
+  @BeforeClass private void setupTestFixtures() {
+    try {
+      testGraphiteServerSocketAddr = new InetSocketAddress(testGraphiteHost, testGraphitePort);
+      testGraphiteServer = ServerSocketChannel.open();
+      testGraphiteServer.socket().bind(testGraphiteServerSocketAddr);
+      testGraphiteServer.configureBlocking(false);
+    }
+    catch (IOException e) {
+      LOG.error("Failed to open Graphite server at {}:{}", testGraphiteHost, testGraphitePort);
+    }
+  }
+
+  @AfterClass private void teardownTestFixtures() {
+    try {
+      testGraphiteServer.close();
+    }
+    catch (IOException e) {
+      LOG.error("Failed to close Graphite server at {}:{}", testGraphiteHost, testGraphitePort);
+    }
+  }
 
   @Test public void shouldInitializeGraphiteReporter() {
     // Given a Graphite configuration and topology context
@@ -59,7 +90,7 @@ public class GraphiteMetricsConsumerTest {
         .put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
-    registrationArgument.put("metrics.graphite.port", testGraphitePort);
+    registrationArgument.put("metrics.graphite.port", testGraphitePort.toString());
     registrationArgument.put("metrics.graphite.prefix", testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);
@@ -101,50 +132,23 @@ public class GraphiteMetricsConsumerTest {
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
     assertThat(consumer.reporter).isInstanceOf(BaseKafkaReporter.class);
     assertThat(consumer.reporter).isNotNull();
-
   }
 
-  @Test(dataProvider = "generateDataPointsInt") public void shouldReadDataAndSendInt(Collection<DataPoint> dataPoints) {
-    // Given a consumer
-    GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
-    Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", testGraphiteHost, "metrics.graphite.port", testGraphitePort,
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
-            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
-
-    Object obj = mock(Object.class);
-    TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn(testTopologyName);
-    IErrorReporter errorReporter = mock(IErrorReporter.class);
-    consumer.prepare(stormConf, obj, context, errorReporter);
-    doNothing().when(consumer).graphiteConnect();
-    doNothing().when(consumer).appendToBuffer(Mockito.anyString(), Mockito.anyMap(), Mockito.anyLong());
-    doNothing().when(consumer).sendMetrics();
-
-    // and a collection of data points containing Integer data (already injected via data provider)
-    // When the reporter processes each data point
-    consumer.handleDataPoints(taskInfo, dataPoints);
-
-    // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
-    verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
-  }
-
-  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsLong")
-  public void shouldReadDataAndSendLong(Collection<DataPoint> dataPoints) {
+  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateMapDataPoints")
+  public void shouldReadDataAndSendMapDataPoints(Collection<DataPoint> dataPoints) {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
 
     Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", testStormSrcWorkerHost, "metrics.graphite.port", testStormSrcWorkerPort.toString(),
+        .of("metrics.graphite.host", testGraphiteHost, "metrics.graphite.port", testGraphitePort.toString(),
             "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
             "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
-    Object obj = mock(Object.class);
 
+    HashMap<String, Object> registrationArgs = new HashMap<String, Object>();
     TopologyContext context = mock(TopologyContext.class);
     when(context.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
-    consumer.prepare(stormConf, obj, context, errorReporter);
+    consumer.prepare(stormConf, registrationArgs, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
 
     // and a collection of data points containing Integer data (already injected via data provider)
@@ -153,59 +157,42 @@ public class GraphiteMetricsConsumerTest {
 
     // Then the reporter should send properly formatted metric messages to Graphite
     HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
-    verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
+    verify(consumer).appendToReporterBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
   }
 
-  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsFloat")
-  public void shouldReadDataAndSendFloat(Collection<DataPoint> dataPoints) {
-    //Given a consumer
-    GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
+  @DataProvider(name = "generateMapDataPoints") public Object[][] generateMapDataPoints() {
+    int numDataPoints = 5;
+    int numDataPointValues = 5;
 
-    Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", testStormSrcWorkerHost, "metrics.graphite.port", testStormSrcWorkerPort.toString(),
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
-            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
-    Object obj = mock(Object.class);
+    Object[][] testData = new Object[numDataPoints][1];
 
-    TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn(testTopologyName);
-    IErrorReporter errorReporter = mock(IErrorReporter.class);
-    consumer.prepare(stormConf, obj, context, errorReporter);
-    doNothing().when(consumer).graphiteConnect();
+    for (int i = 0; i < numDataPoints; i++) {
+      Collection<DataPoint> dpList = new ArrayList<DataPoint>();
+      DataPoint dp = new DataPoint(RandomStringUtils.randomAlphanumeric(10), new HashMap<String, Object>());
 
-    // and a collection of data points containing Integer data (already injected via data provider)
-    // When the reporter processes each data point
-    consumer.handleDataPoints(taskInfo, dataPoints);
+      for (int j = 0; j < numDataPointValues; j++) {
+        Map dpMap = (Map) dp.value;
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), rng.nextInt());
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), Integer.toString(rng.nextInt()));
 
-    // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
-    verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
-  }
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), rng.nextLong());
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), Long.toString(rng.nextLong()));
 
-  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" }, dataProvider = "generateDataPointsDouble")
-  public void shouldReadDataAndSendDouble(Collection<DataPoint> dataPoints) {
-    //Given a consumer
-    GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), rng.nextFloat());
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), Float.toString(rng.nextFloat()));
 
-    Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", testStormSrcWorkerHost, "metrics.graphite.port", testStormSrcWorkerPort.toString(),
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
-            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), rng.nextDouble());
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), Double.toString(rng.nextDouble()));
 
-    Object obj = mock(Object.class);
-    TopologyContext context = mock(TopologyContext.class);
-    when(context.getStormId()).thenReturn(testTopologyName);
-    IErrorReporter errorReporter = mock(IErrorReporter.class);
-    consumer.prepare(stormConf, obj, context, errorReporter);
-    doNothing().when(consumer).graphiteConnect();
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), RandomStringUtils.random(10));
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), null);
+      }
 
-    // and a collection of data points containing Integer data (already injected via data provider)
-    // When the reporter processes each data point
-    consumer.handleDataPoints(taskInfo, dataPoints);
+      dpList.add(dp);
+      testData[i][0] = dpList;
+    }
 
-    // Then the reporter should send properly formatted metric messages to Graphite
-    HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
-    verify(consumer).appendToBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
+    return testData;
   }
 
   private HashMap<String, Double> buildExpectedMetricMap(Collection<DataPoint> dataPoints) {
@@ -215,7 +202,23 @@ public class GraphiteMetricsConsumerTest {
       Map<String, Object> datamap = (Map<String, Object>) dp.value;
 
       for (String key : datamap.keySet()) {
-        expMap.put(key, ((Number) datamap.get(key)).doubleValue());
+
+        if (datamap.get(key) != null) {
+          if (datamap.get(key) instanceof String) {
+            try {
+              expMap.put(key, Double.parseDouble((String) datamap.get(key)));
+            }
+            catch (NumberFormatException e) {
+              // Do not add invalid strings to expected output
+            }
+          }
+          else {
+            expMap.put(key, ((Number) datamap.get(key)).doubleValue());
+          }
+        }
+        else {
+          // Do not add null values to expected output
+        }
       }
     }
     return expMap;
@@ -229,46 +232,5 @@ public class GraphiteMetricsConsumerTest {
         testStormSrcWorkerHost + "." +
         testStormSrcWorkerPort + "." +
         testStormSrcTaskId;
-  }
-
-  @DataProvider(name = "generateDataPointsInt") public Object[][] generateDataPointsInt() {
-
-    DataPoint dpInt = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpInt.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextInt());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpInt);
-    return new Object[][] { new Object[] { dpList } };
-  }
-
-  @DataProvider(name = "generateDataPointsLong") public Object[][] generateDataPointsLong() {
-    DataPoint dpLong = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpLong.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextLong());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpLong);
-    return new Object[][] { new Object[] { dpList } };
-  }
-
-  @DataProvider(name = "generateDataPointsFloat") public Object[][] generateDataPointsFloat() {
-    DataPoint dpFloat = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpFloat.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextFloat());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpFloat);
-    return new Object[][] { new Object[] { dpList } };
-  }
-
-  @DataProvider(name = "generateDataPointsDouble") public Object[][] generateDataPointsDouble() {
-    DataPoint dpDouble = new DataPoint(Integer.toString(rng.nextInt(320), 10), new HashMap<String, Object>());
-    for (int i = 0; i < 5; i++) {
-      ((Map) dpDouble.value).put(Integer.toString(rng.nextInt(320), 10), rng.nextDouble());
-    }
-    Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-    dpList.add(dpDouble);
-    return new Object[][] { new Object[] { dpList } };
   }
 }

@@ -159,7 +159,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       LOG.warn("No reference to configuration parameter registrationArgument found: {}",
           registrationArgument.toString());
     }
-    
+
     reporterConfig = configMap;
 
     if (reporterConfig.containsKey(GRAPHITE_PREFIX_OPTION)) {
@@ -187,7 +187,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     Class reporterClass = Class.forName(className);
     AbstractReporter reporter = (AbstractReporter) reporterClass.newInstance();
     reporter.prepare(reporterConfig);
-    
+
     return reporter;
   }
 
@@ -207,29 +207,26 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         continue;
       }
 
-      // Most data points contain a Map as a value.
-      if (dataPoint.value instanceof Map) {
+      if (dataPoint.value == null) {
+        LOG.warn("Data point with name {} has a value of null. Discarding data point", dataPoint.name);
+      }
+      else if (dataPoint.value instanceof Map) {
         Map<String, Object> dataMap = (Map<String, Object>) dataPoint.value;
         Map<String, Double> bufferMap = new HashMap<String, Double>();
 
         for (String key : dataMap.keySet()) {
-          if (dataMap.get(key) instanceof Number) {
-            bufferMap.put(key, ((Number) dataMap.get(key)).doubleValue());
-          }
-          else {
-            LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
-                dataMap.get(key).getClass().getName());
+          Double dblValue = convertToDoubleValue(key, dataMap.get(key));
+          if (dblValue != null) {
+            bufferMap.put(key, dblValue);
           }
         }
-
-        appendToBuffer(metricPrefix, bufferMap, taskInfo.timestamp);
+        appendToReporterBuffer(metricPrefix, bufferMap, taskInfo.timestamp);
       }
-
       else if (dataPoint.value instanceof Number) {
         Double dblValue = ((Number) dataPoint.value).doubleValue();
         HashMap<String, Double> metric = new HashMap<String, Double>();
         metric.put(dataPoint.name + "value", dblValue);
-        appendToBuffer(metricPrefix, metric, taskInfo.timestamp);
+        appendToReporterBuffer(metricPrefix, metric, taskInfo.timestamp);
       }
       else {
         LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
@@ -240,6 +237,33 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     graphiteDisconnect();
   }
 
+  private Double convertToDoubleValue(String key, Object value) {
+    if (value != null) {
+      Double result;
+
+      if (value instanceof String) {
+        try {
+          result = Double.parseDouble((String) value);
+        }
+        catch (NumberFormatException e) {
+          LOG.warn("Unparseable metric with key {} and value of {} found. Discarding metric.", key, value);
+          result = null;
+        }
+      }
+      else if (value instanceof Number) {
+        result = ((Number) value).doubleValue();
+      }
+      else {
+        result = null;
+      }
+
+      return result;
+    }
+    else {
+      LOG.warn("Metric with key {} has a value of null. Discarding metric.", key);
+      return null;
+    }
+  }
   /**
    * Constructs a fully qualified metric prefix.
    *
@@ -277,7 +301,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
   }
 
-  protected void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
+  protected void appendToReporterBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     if (reporter != null) {
       reporter.appendToBuffer(prefix, metrics, timestamp);
     }

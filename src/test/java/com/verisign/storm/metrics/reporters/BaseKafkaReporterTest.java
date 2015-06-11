@@ -53,15 +53,16 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 
 public class BaseKafkaReporterTest {
-  private static final int TEST_COUNT = 10;
-  private static final Logger LOG = LoggerFactory.getLogger(BaseKafkaReporterTest.class);
+  private int testCount = 10;
+  private Logger LOG = LoggerFactory.getLogger(BaseKafkaReporterTest.class);
 
-  private static final Integer ZOOKEEPER_PORT = 2181;
-  private static final String ZOOKEEPER_HOST = "127.0.0.1";
-  private static final String ZK_CONNECT = ZOOKEEPER_HOST + ":" + ZOOKEEPER_PORT;
-  private static final String KAFKA_HOST = "127.0.0.1";
-  private static final Integer KAFKA_PORT = 9092;
-  private static final String KAFKA_BROKER_LIST = KAFKA_HOST + ":" + KAFKA_PORT;
+  private String testZkHost = "127.0.0.1";
+  private Integer testZkPort = 2181;
+  private String testZkConnect = testZkHost + ":" + testZkPort;
+
+  private String testKafkaHost = "127.0.0.1";
+  private Integer testKafkaPort = 9092;
+  private String testKafkaBrokerList = testKafkaHost + ":" + testKafkaPort;
 
   private String destinationTopic;
   private KafkaServerStartable kafkaServer;
@@ -71,7 +72,7 @@ public class BaseKafkaReporterTest {
 
   @BeforeClass private void initializeCluster() {
     try {
-      zookeeper = new TestingServer(ZOOKEEPER_PORT);
+      zookeeper = new TestingServer(testZkPort);
     }
     catch (Exception e) {
       LOG.error(e.getMessage());
@@ -82,11 +83,21 @@ public class BaseKafkaReporterTest {
     kafkaServer.startup();
   }
 
+  @AfterClass private void exitCluster() {
+    kafkaServer.shutdown();
+    try {
+      zookeeper.close();
+    }
+    catch (IOException e) {
+      LOG.error("Failed to close Zookeeper server at {}:{}", testZkHost, testZkPort);
+    }
+  }
+
   @DataProvider(name = "metrics") public Object[][] metricsProvider() {
     Random rng = new Random(System.currentTimeMillis());
-    Object[][] testData = new Object[TEST_COUNT][];
+    Object[][] testData = new Object[testCount][];
 
-    for (int i = 0; i < TEST_COUNT; i++) {
+    for (int i = 0; i < testCount; i++) {
       List<Object> data = new ArrayList<Object>();
 
       String prefix = new BigInteger(100, rng).toString(32);
@@ -116,7 +127,7 @@ public class BaseKafkaReporterTest {
 
     /* GIVEN: A Zookeeper instance, a Kafka broker, and a the Kafka reporter we're testing */
     initializeAvroReporter();
-    SimpleConsumer kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "simpleConsumer");
+    SimpleConsumer kafkaConsumer = new SimpleConsumer(testKafkaHost, testKafkaPort, 10000, 1024000, "simpleConsumer");
     
     /* WHEN: A new metric is appended to the reporter's buffer and we tell the reporter to send its data */
     submitMetricToReporter(metricPrefix, metricKey, value, timestamp);
@@ -148,7 +159,7 @@ public class BaseKafkaReporterTest {
 
     /* GIVEN: A Zookeeper instance, a Kafka broker, and a the Schema Registry-based Kafka reporter we're testing */
     initializeSchemaRegistryReporter();
-    SimpleConsumer kafkaConsumer = new SimpleConsumer(KAFKA_HOST, KAFKA_PORT, 10000, 1024000, "simpleConsumer");
+    SimpleConsumer kafkaConsumer = new SimpleConsumer(testKafkaHost, testKafkaPort, 10000, 1024000, "simpleConsumer");
     KafkaAvroDecoder decoder = new KafkaAvroDecoder(schemaRegistryClient);
 
     /* WHEN: A new metric is appended to the reporter's buffer and we tell the reporter to send its data */
@@ -209,25 +220,15 @@ public class BaseKafkaReporterTest {
     return bytes;
   }
 
-  @AfterClass private void exitCluster() {
-    kafkaServer.shutdown();
-    try {
-      zookeeper.close();
-    }
-    catch (IOException e) {
-      LOG.error(e.getMessage());
-    }
-  }
-
   private Properties getBrokerConfig() {
     Properties props = new Properties();
     props.put("broker.id", "0");
-    props.put("host.name", KAFKA_HOST);
-    props.put("port", KAFKA_PORT.toString());
+    props.put("host.name", testKafkaHost);
+    props.put("port", testKafkaPort.toString());
     props.put("num.partitions", "1");
     props.put("auto.create.topics.enable", "true");
     props.put("message.max.bytes", "1000000");
-    props.put("zookeeper.connect", ZK_CONNECT);
+    props.put("zookeeper.connect", testZkConnect);
 
     return props;
   }
@@ -235,7 +236,7 @@ public class BaseKafkaReporterTest {
   private void initializeSchemaRegistryReporter() {
     destinationTopic = "schemaRegistryDestinationTopic";
     HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
-    reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
+    reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, testKafkaBrokerList);
     reporterConfig.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, destinationTopic);
     reporterConfig.put("parallelism.hint", 1);
     reporterConfig.put("some.value.that.is.null", null);
@@ -265,7 +266,7 @@ public class BaseKafkaReporterTest {
   private void initializeAvroReporter() {
     destinationTopic = "avroDestinationTopic";
     HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
-    reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, KAFKA_BROKER_LIST);
+    reporterConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, testKafkaBrokerList);
     reporterConfig.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, destinationTopic);
     reporterConfig.put("parallelism.hint", 1);
     reporterConfig.put("some.value.that.is.null", null);

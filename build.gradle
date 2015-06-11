@@ -104,7 +104,8 @@ dependencies {
       ['org.testng:testng:6.8.8'],
       // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
       // (Gradle will fail to run tests otherwise.)
-      ['com.google.inject:guice:3.0']
+      ['com.google.inject:guice:3.0'],
+      ['org.apache.commons:commons-lang3:3.4']
   )
 
 }
