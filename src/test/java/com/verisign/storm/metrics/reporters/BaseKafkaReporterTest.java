@@ -25,6 +25,7 @@ import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
+import kafka.message.Message;
 import kafka.message.MessageAndOffset;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
@@ -209,7 +210,7 @@ public class BaseKafkaReporterTest {
     Iterator<MessageAndOffset> messageSetItr = response.messageSet(destinationTopic, 0).iterator();
 
     // Fast forward to the message at the latest offset in the topic
-    MessageAndOffset latestMessage = null;
+    MessageAndOffset latestMessage = new MessageAndOffset(new Message(new byte[] { }), 0L);
     while (messageSetItr.hasNext()) {
       latestMessage = messageSetItr.next();
     }

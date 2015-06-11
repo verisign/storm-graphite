@@ -168,10 +168,9 @@ public class GraphiteMetricsConsumerTest {
 
     for (int i = 0; i < numDataPoints; i++) {
       Collection<DataPoint> dpList = new ArrayList<DataPoint>();
-      DataPoint dp = new DataPoint(RandomStringUtils.randomAlphanumeric(10), new HashMap<String, Object>());
 
       for (int j = 0; j < numDataPointValues; j++) {
-        Map dpMap = (Map) dp.value;
+        HashMap<String, Object> dpMap = new HashMap<String, Object>();
         dpMap.put(RandomStringUtils.randomAlphanumeric(10), rng.nextInt());
         dpMap.put(RandomStringUtils.randomAlphanumeric(10), Integer.toString(rng.nextInt()));
 
@@ -186,8 +185,9 @@ public class GraphiteMetricsConsumerTest {
 
         dpMap.put(RandomStringUtils.randomAlphanumeric(10), RandomStringUtils.random(10));
         dpMap.put(RandomStringUtils.randomAlphanumeric(10), null);
+        dpMap.put(RandomStringUtils.randomAlphanumeric(10), Integer.toString(rng.nextInt()));
       }
-
+      DataPoint dp = new DataPoint(RandomStringUtils.randomAlphanumeric(10), new HashMap<String, Object>());
       dpList.add(dp);
       testData[i][0] = dpList;
     }

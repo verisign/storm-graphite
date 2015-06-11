@@ -148,7 +148,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       configMap.putAll(config);
     }
     else {
-      LOG.warn("No reference to configuration parameter config found: {}", config.toString());
+      LOG.warn("No reference to configuration parameter config found.");
     }
 
     if (registrationArgument != null && registrationArgument instanceof Map) {
@@ -156,8 +156,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       configMap.putAll((Map) registrationArgument);
     }
     else {
-      LOG.warn("No reference to configuration parameter registrationArgument found: {}",
-          registrationArgument.toString());
+      LOG.warn("No reference to configuration parameter registrationArgument found");
     }
 
     reporterConfig = configMap;
@@ -214,12 +213,13 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         Map<String, Object> dataMap = (Map<String, Object>) dataPoint.value;
         Map<String, Double> bufferMap = new HashMap<String, Double>();
 
-        for (String key : dataMap.keySet()) {
-          Double dblValue = convertToDoubleValue(key, dataMap.get(key));
+        for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+          Double dblValue = convertToDoubleValue(entry.getKey(), entry.getValue());
           if (dblValue != null) {
-            bufferMap.put(key, dblValue);
+            bufferMap.put(entry.getKey(), dblValue);
           }
         }
+
         appendToReporterBuffer(metricPrefix, bufferMap, taskInfo.timestamp);
       }
       else if (dataPoint.value instanceof Number) {
