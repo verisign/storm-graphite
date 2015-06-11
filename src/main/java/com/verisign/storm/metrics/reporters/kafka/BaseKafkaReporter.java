@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -78,9 +79,9 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
     }
 
     Properties producerProps = new Properties();
-    for (String key : conf.keySet()) {
-      if (conf.get(key) != null) {
-        producerProps.setProperty(key, conf.get(key).toString());
+    for (Entry<String, Object> entry : conf.entrySet()) {
+      if (entry.getValue() != null) {
+        producerProps.setProperty(entry.getKey(), entry.getValue().toString());
       }
     }
 
@@ -100,17 +101,17 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
   @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     Map<String, Double> metricsDoubleMap = new HashMap<String, Double>();
 
-    for (String key : metrics.keySet()) {
+    for (Entry<String, Double> entry : metrics.entrySet()) {
       try {
-        Double value = Double.parseDouble(GraphiteCodec.format(metrics.get(key)));
-        metricsDoubleMap.put(key, value);
+        Double dblValue = Double.parseDouble(GraphiteCodec.format(entry.getValue()));
+        metricsDoubleMap.put(entry.getKey(), dblValue);
       }
       catch (NumberFormatException e) {
         String trace = Throwables.getStackTraceAsString(e);
-        LOG.error("Error parsing metric value {} in path {}: {}", metrics.get(key), prefix + key, trace);
+        LOG.error("Error parsing metric value {} in path {}: {}", entry.getValue(), prefix + entry.getKey(), trace);
       }
       catch (NullPointerException npe) {
-        LOG.error("Error appending metric with name {} to buffer, retrieved value is null.", key);
+        LOG.error("Error appending metric with name {} to buffer, retrieved value is null.", entry.getKey());
       }
     }
 

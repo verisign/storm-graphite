@@ -117,12 +117,8 @@ public class GraphiteReporter extends AbstractReporter {
     }
   }
 
-
   @Override public void emptyBuffer() {
-    return;
   }
-
-
 
   @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     try {
@@ -130,8 +126,8 @@ public class GraphiteReporter extends AbstractReporter {
         graphite.connect();
       }
 
-      for (String key : metrics.keySet()) {
-        graphite.send(prefix + "." + key, GraphiteCodec.format(metrics.get(key)), timestamp);
+      for (Map.Entry<String, Double> entry : metrics.entrySet()) {
+        graphite.send(prefix + "." + entry.getKey(), GraphiteCodec.format(entry.getValue()), timestamp);
       }
     }
     catch (IOException e) {
