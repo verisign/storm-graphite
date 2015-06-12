@@ -21,6 +21,7 @@ import backtype.storm.task.TopologyContext;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
+import com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter;
 import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -86,8 +87,8 @@ public class GraphiteMetricsConsumerTest {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put("metrics.graphite.host", testGraphiteHost);
-    stormConfig
-        .put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
+    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, GraphiteReporter.class.getName());
+    //    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put("metrics.graphite.port", testGraphitePort.toString());
@@ -112,8 +113,7 @@ public class GraphiteMetricsConsumerTest {
     // Given a Kafka configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put(BaseKafkaReporter.KAFKA_BROKER_LIST_FIELD, "127.0.0.1:9092");
-    stormConfig
-        .put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter");
+    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, AvroKafkaReporter.class.getName());
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
