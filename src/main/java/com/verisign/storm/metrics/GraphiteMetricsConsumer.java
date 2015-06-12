@@ -246,7 +246,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
           result = Double.parseDouble((String) value);
         }
         catch (NumberFormatException e) {
-          LOG.warn("Unparseable metric with key {} and value of {} found. Discarding metric.", key, value);
+          LOG.warn("Failed to parse metric with key {} and value of {} into a Double. Discarding metric.", key, value);
           result = null;
         }
       }
