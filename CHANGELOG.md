@@ -1,8 +1,4 @@
-# 0.1.6 (June 10, 2015)
-BREAKING CHANGES
-
-* Added required registration argument `metrics.reporter.name` to specify which backend reporter should be used.
-
+# 0.2.0(June 10, 2015)
 IMPROVEMENTS
 
 * Added support for reporting to Kafka cluster.

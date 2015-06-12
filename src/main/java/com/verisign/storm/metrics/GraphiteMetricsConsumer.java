@@ -19,6 +19,7 @@ import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,10 +125,10 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   public static final String REPORTER_NAME = "metrics.reporter.name";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
   private static final String DEFAULT_PREFIX = "metrics";
+  private static final String DEFAULT_REPORTER = GraphiteReporter.class.getName();
 
   private String graphitePrefix;
   private String stormId;
-  private Map reporterConfig;
 
   protected AbstractReporter reporter;
 
@@ -159,17 +160,19 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       LOG.warn("No reference to configuration parameter registrationArgument found");
     }
 
-    reporterConfig = configMap;
-
-    if (reporterConfig.containsKey(GRAPHITE_PREFIX_OPTION)) {
-      graphitePrefix = (String) reporterConfig.get(GRAPHITE_PREFIX_OPTION);
+    if (configMap.containsKey(GRAPHITE_PREFIX_OPTION)) {
+      graphitePrefix = (String) configMap.get(GRAPHITE_PREFIX_OPTION);
     }
     else {
       graphitePrefix = DEFAULT_PREFIX;
     }
 
+    if (!configMap.containsKey(REPORTER_NAME)) {
+      configMap.put(REPORTER_NAME, DEFAULT_REPORTER);
+    }
+
     try {
-      reporter = configureReporter(reporterConfig);
+      reporter = configureReporter(configMap);
     }
     catch (Exception e) {
       LOG.error("Error configuring metrics reporter:" + e.getMessage());

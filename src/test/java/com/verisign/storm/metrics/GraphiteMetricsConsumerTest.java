@@ -86,8 +86,6 @@ public class GraphiteMetricsConsumerTest {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, testGraphiteHost);
-    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, GraphiteReporter.class.getName());
-    //    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
