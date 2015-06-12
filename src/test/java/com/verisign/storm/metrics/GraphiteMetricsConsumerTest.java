@@ -18,7 +18,6 @@ import backtype.storm.metric.api.IMetricsConsumer.DataPoint;
 import backtype.storm.metric.api.IMetricsConsumer.TaskInfo;
 import backtype.storm.task.IErrorReporter;
 import backtype.storm.task.TopologyContext;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter;
@@ -86,13 +85,13 @@ public class GraphiteMetricsConsumerTest {
   @Test public void shouldInitializeGraphiteReporter() {
     // Given a Graphite configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
-    stormConfig.put("metrics.graphite.host", testGraphiteHost);
+    stormConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, testGraphiteHost);
     stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, GraphiteReporter.class.getName());
     //    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
 
     Map<String, String> registrationArgument = Maps.newHashMap();
-    registrationArgument.put("metrics.graphite.port", testGraphitePort.toString());
-    registrationArgument.put("metrics.graphite.prefix", testPrefix);
+    registrationArgument.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
+    registrationArgument.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);
     when(topologyContext.getStormId()).thenReturn(testTopologyName);
@@ -117,7 +116,7 @@ public class GraphiteMetricsConsumerTest {
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
-    registrationArgument.put("metrics.graphite.prefix", testPrefix);
+    registrationArgument.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);
     when(topologyContext.getStormId()).thenReturn(testTopologyName);
@@ -139,16 +138,17 @@ public class GraphiteMetricsConsumerTest {
     //Given a consumer
     GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
 
-    Map stormConf = ImmutableMap
-        .of("metrics.graphite.host", testGraphiteHost, "metrics.graphite.port", testGraphitePort.toString(),
-            "metrics.graphite.prefix", testPrefix, "metrics.reporter.name",
-            "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter");
+    Map<String, String> stormConfig = Maps.newHashMap();
+    stormConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, testGraphiteHost);
+    stormConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
+    stormConfig.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
+    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, GraphiteReporter.class.getName());
 
     HashMap<String, Object> registrationArgs = new HashMap<String, Object>();
     TopologyContext context = mock(TopologyContext.class);
     when(context.getStormId()).thenReturn(testTopologyName);
     IErrorReporter errorReporter = mock(IErrorReporter.class);
-    consumer.prepare(stormConf, registrationArgs, context, errorReporter);
+    consumer.prepare(stormConfig, registrationArgs, context, errorReporter);
     doNothing().when(consumer).graphiteConnect();
 
     // and a collection of data points containing Integer data (already injected via data provider)
