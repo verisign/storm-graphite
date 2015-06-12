@@ -70,6 +70,8 @@ metrics to a [Graphite](https://github.com/graphite-project/graphite-web) server
 
 For large Storm clusters emitting a high volume of metrics, we've included a [KafkaReporter](src/main/java/com/verisign/storm/metrics/reporters/KafkaReporter.java) that reports metrics to a configurable [Kafka](https://kafka.apache.org/) topic. Applications leveraging a Kafka consumer can then subscribe to this topic and consume the Avro-encoded metric messages using the supplied Avro [schema](src/main/avro/graphingMetrics.avsc). This can be useful for sending metric data to multiple endpoints, introducing flow control, and ensuring durability.
 
+The KafkaReporter also features integration with Confluent's RESTful Avro schema storage and retrieval service, [Schema Registry](https://github.com/confluentinc/schema-registry).
+
 <a name="Usage"></a>
 
 # Usage
@@ -260,7 +262,7 @@ topology.metrics.consumer.register:
   - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
     parallelism.hint: 1
     argument:
-      metrics.reporter.name: "com.verisign.storm.metrics.reporters.GraphiteReporter"
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.graphite.GraphiteReporter"
       metrics.graphite.host: "graphite.example.com"
       metrics.graphite.port: "2003"
       metrics.graphite.prefix: "storm.test"
@@ -279,10 +281,13 @@ topology.metrics.consumer.register:
   - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
     parallelism.hint: 1
     argument:
-      metrics.reporter.name: "com.verisign.storm.metrics.reporters.KafkaReporter"
+      metrics.reporter.name: "com.verisign.storm.metrics.reporters.kafka.KafkaReporter"
       metrics.graphite.prefix: "storm.test"
 	  metrics.kafka.topic: "metricsTopic"
 	  metrics.kafka.metadata.broker.list: "broker1.example.com:9092,broker2.example.com:9092,broker3.example.com:9092"
+	  # Optional arguments can also be supplied to integrate with Confluent's Schema Registry
+	  metrics.kafka.schema.registry.url: "http://schemaregistry.example.com:8081"
+	  metrics.kafka.schema.registry.id.capacity: 100
 ```
 
 

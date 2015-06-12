@@ -14,7 +14,7 @@ buildscript {
 }
 
 group = 'com.verisign.storm.metrics'
-version = '0.1.5-SNAPSHOT'
+version = '0.1.6-SNAPSHOT'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
@@ -69,6 +69,7 @@ targetCompatibility = jdkVersion
 repositories {
   mavenCentral()
   maven { url 'https://clojars.org/repo' }
+  maven { url 'http://packages.confluent.io/maven/' }
 }
 
 dependencies {
@@ -82,8 +83,11 @@ dependencies {
       ["com.twitter:bijection-core_2.10:0.7.0"],
       ["com.twitter:bijection-avro_2.10:0.7.0"],
       ["com.twitter:util-core_2.10:6.1.0"],
-      ["org.apache.kafka:kafka_2.10:0.8.2.0"],
+      ["org.apache.kafka:kafka_2.10:0.8.2.0-cp"],
+      ["io.confluent:kafka-avro-serializer:1.0"],
       ["org.apache.avro:avro:1.7.6"],
+      ["com.twitter:bijection-core_2.10:0.8.0"],
+      ["com.twitter:bijection-avro_2.10:0.8.0"]
   )
 
   compile(
@@ -100,7 +104,8 @@ dependencies {
       ['org.testng:testng:6.8.8'],
       // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
       // (Gradle will fail to run tests otherwise.)
-      ['com.google.inject:guice:3.0']
+      ['com.google.inject:guice:3.0'],
+      ['org.apache.commons:commons-lang3:3.4']
   )
 
 }
@@ -216,7 +221,6 @@ shadowJar {
     include(dependency("io.dropwizard.metrics:metrics-core:${metricsVersion}"))
     include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
   }
-
 }
 
 // `build` should also create the uber/shadow jar by default.

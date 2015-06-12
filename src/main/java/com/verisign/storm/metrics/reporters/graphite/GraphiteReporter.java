@@ -12,12 +12,13 @@
  *
  * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
  */
-package com.verisign.storm.metrics.reporters;
+package com.verisign.storm.metrics.reporters.graphite;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.graphite.ConnectionFailureException;
-import com.verisign.storm.metrics.graphite.GraphiteCodec;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
+import com.verisign.storm.metrics.util.GraphiteCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,14 +44,16 @@ public class GraphiteReporter extends AbstractReporter {
   private int graphitePort;
   private InetSocketAddress graphiteSocketAddr;
 
-  private final String serverFingerprint;
-  private final int minConnectAttemptIntervalSecs;
-  private final Graphite graphite;
+  private String serverFingerprint;
+  private int minConnectAttemptIntervalSecs;
+  private Graphite graphite;
   private long lastConnectAttemptTimestampMs;
 
-  public GraphiteReporter(Map<String, Object> conf) {
-    super(conf);
+  public GraphiteReporter() {
+    super();
+  }
 
+  @Override public void prepare(Map<String, Object> conf) {
     if (conf.containsKey(GRAPHITE_HOST_OPTION)) {
       graphiteHost = (String) conf.get(GRAPHITE_HOST_OPTION);
     }
@@ -78,8 +81,9 @@ public class GraphiteReporter extends AbstractReporter {
     serverFingerprint = graphiteSocketAddr.getAddress() + ":" + graphiteSocketAddr.getPort();
     this.graphite = new Graphite(graphiteSocketAddr);
     lastConnectAttemptTimestampMs = 0;
-
   }
+
+
 
   @Override public String getBackendFingerprint() {
     return serverFingerprint;
@@ -113,12 +117,8 @@ public class GraphiteReporter extends AbstractReporter {
     }
   }
 
-
   @Override public void emptyBuffer() {
-    return;
   }
-
-
 
   @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     try {
@@ -126,8 +126,8 @@ public class GraphiteReporter extends AbstractReporter {
         graphite.connect();
       }
 
-      for (String key : metrics.keySet()) {
-        graphite.send(prefix + "." + key, GraphiteCodec.format(metrics.get(key)), timestamp);
+      for (Map.Entry<String, Double> entry : metrics.entrySet()) {
+        graphite.send(prefix + "." + entry.getKey(), GraphiteCodec.format(entry.getValue()), timestamp);
       }
     }
     catch (IOException e) {

@@ -1,4 +1,14 @@
-# 0.1.5 (unreleased)
+# 0.1.6 (June 10, 2015)
+BREAKING CHANGES
+
+* Added required registration argument `metrics.reporter.name` to specify which backend reporter should be used.
+
+IMPROVEMENTS
+
+* Added support for reporting to Kafka cluster.
+* Added support for integrating with Confluent's [Schema Registry](https://github.com/confluentinc/schema-registry) when reporting to Kafka.
+
+# 0.1.5 (March 25, 2015)
 
 BREAKING CHANGES
 
