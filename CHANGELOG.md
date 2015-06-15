@@ -1,8 +1,10 @@
-# 0.2.0(June 10, 2015)
+# 0.2.0 (June 10, 2015)
+
 IMPROVEMENTS
 
 * Added support for reporting to Kafka cluster.
 * Added support for integrating with Confluent's [Schema Registry](https://github.com/confluentinc/schema-registry) when reporting to Kafka.
+
 
 # 0.1.5 (March 25, 2015)
 
