@@ -1,3 +1,9 @@
+# 0.2.1 (June 16, 2015)
+
+BUG FIXES
+
+* Fixed bug where metric data point names were not being reported in output metric path.
+
 # 0.2.0 (June 10, 2015)
 
 IMPROVEMENTS
