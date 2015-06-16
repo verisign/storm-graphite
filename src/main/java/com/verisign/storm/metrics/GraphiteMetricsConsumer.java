@@ -200,6 +200,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     String metricPrefix = constructMetricPrefix(graphitePrefix, taskInfo);
 
     for (DataPoint dataPoint : dataPoints) {
+
       // TODO: Correctly process metrics of the messaging layer queues and connection states.
       // These metrics need to be handled differently as they are more structured than raw numbers.
       // For the moment we ignore these metrics and track this task at
@@ -219,7 +220,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
           Double dblValue = convertToDoubleValue(entry.getKey(), entry.getValue());
           if (dblValue != null) {
-            bufferMap.put(entry.getKey(), dblValue);
+            bufferMap.put(dataPoint.name + "." + entry.getKey(), dblValue);
           }
         }
 
