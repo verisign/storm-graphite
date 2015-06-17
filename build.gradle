@@ -75,8 +75,6 @@ repositories {
 dependencies {
 
   compile(
-      ['org.apache.curator:curator-test:2.6.0'],
-      ['org.apache.curator:curator-framework:2.6.0'],
       ['com.google.guava:guava:17.0'],
       ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
       ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
@@ -85,9 +83,8 @@ dependencies {
       ["com.twitter:util-core_2.10:6.1.0"],
       ["org.apache.kafka:kafka_2.10:0.8.2.0-cp"],
       ["io.confluent:kafka-avro-serializer:1.0"],
-      ["org.apache.avro:avro:1.7.6"],
-      ["com.twitter:bijection-core_2.10:0.8.0"],
-      ["com.twitter:bijection-avro_2.10:0.8.0"]
+      ["io.confluent:kafka-schema-registry-client:1.0"],
+      ["org.apache.avro:avro:1.7.6"]
   )
 
   compile(
@@ -98,6 +95,8 @@ dependencies {
   }
 
   testCompile(
+      ['org.apache.curator:curator-test:2.6.0'],
+      ['org.apache.curator:curator-framework:2.6.0'],
       ['org.uncommons:reportng:1.1.4'],
       ['org.mockito:mockito-all:1.9.5'],
       ['org.easytesting:fest-assert-core:2.0M10'],
@@ -214,12 +213,15 @@ deb.dependsOn(shadowJar)
 
 shadowJar {
 
-  // Relocate Metrics library to prevent conflicts with user code that depends on Metrics, too.
+  // Relocate Metrics and Schema Registry libraries to prevent conflicts with user code that depends on Metrics, too.
   relocate('com.codahale.metrics', 'com.verisign.storm-graphite.com.codahale.metrics')
+  relocate('io.confluent.kafka', 'com.verisign.storm-graphite.io.confluent.kafka')
 
   dependencies {
     include(dependency("io.dropwizard.metrics:metrics-core:${metricsVersion}"))
     include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
+    include(dependency("io.confluent:kafka-avro-serializer:1.0"))
+    include(dependency("io.confluent:kafka-schema-registry-client:1.0"))
   }
 }
 
