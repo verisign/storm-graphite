@@ -1,3 +1,9 @@
+# 0.2.2 (June 17, 2015)
+
+BUG FIXES
+
+* Added necessary Confluent Schema Registry libraries to output JAR file.
+
 # 0.2.1 (June 16, 2015)
 
 BUG FIXES

@@ -14,7 +14,7 @@ buildscript {
 }
 
 group = 'com.verisign.storm.metrics'
-version = '0.2.1-SNAPSHOT'
+version = '0.2.2-SNAPSHOT'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
