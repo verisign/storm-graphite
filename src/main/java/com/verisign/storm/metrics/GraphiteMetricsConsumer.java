@@ -311,7 +311,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         reporter.appendToBuffer(prefix, metrics, timestamp);
       }
       else {
-        LOG.warn("Dropping metrics map with prefix {} because it is empty.", prefix);
+        LOG.debug("Dropping metrics map with prefix {} because it is empty.", prefix);
       }
     }
     else {
