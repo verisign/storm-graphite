@@ -96,7 +96,7 @@ import java.util.Map;
  *  topology.metrics.consumer.register:
  *    - class: "com.verisign.storm.metrics.GraphiteMetricsConsumer"
  *      parallelism.hint: 1
- *      argument:      
+ *      argument:
  *        metrics.reporter.name: "com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter"
  *        metrics.graphite.prefix: "storm.cluster.metrics"
  *        metrics.kafka.topic: "graphingMetrics"
@@ -125,7 +125,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   public static final String REPORTER_NAME = "metrics.reporter.name";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
   private static final String DEFAULT_PREFIX = "metrics";
-  private static final String DEFAULT_REPORTER = GraphiteReporter.class.getName();
+  private static final String DEFAULT_REPORTER = GraphiteReporter.class.getCanonicalName();
 
   private String graphitePrefix;
   private String stormId;
@@ -307,7 +307,15 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
   protected void appendToReporterBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     if (reporter != null) {
-      reporter.appendToBuffer(prefix, metrics, timestamp);
+      if (!metrics.isEmpty()) {
+        reporter.appendToBuffer(prefix, metrics, timestamp);
+      }
+      else {
+        LOG.warn("Dropping metrics map with prefix {} because it is empty.", prefix);
+      }
+    }
+    else {
+      LOG.error("Failed to append metrics to buffer because backend reporter is undefined.");
     }
   }
 
@@ -319,6 +327,9 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     try {
       if (reporter != null) {
         reporter.sendBufferContents();
+      }
+      else {
+        LOG.error("Failed to send metrics because backend reporter is undefined.");
       }
     }
     catch (IOException e) {

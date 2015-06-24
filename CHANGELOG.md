@@ -1,3 +1,9 @@
+# 0.2.3 (June 24, 2015)
+
+BUG FIXES
+
+* Fixed bug where empty sets of metrics were being added to the reporting buffer and sent to the backend endpoint.
+
 # 0.2.2 (June 17, 2015)
 
 BUG FIXES
