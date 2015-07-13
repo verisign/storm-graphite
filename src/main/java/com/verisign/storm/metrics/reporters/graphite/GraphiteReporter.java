@@ -15,6 +15,8 @@
 package com.verisign.storm.metrics.reporters.graphite;
 
 import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteSender;
+import com.codahale.metrics.graphite.GraphiteUDP;
 import com.google.common.base.Throwables;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
@@ -36,9 +38,9 @@ public class GraphiteReporter extends AbstractReporter {
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
   public static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
   public static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
+  public static final String GRAPHITE_PROTOCOL_OPTION = "metrics.graphite.protocol";
   public static final String GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION
       = "metrics.graphite.min-connect-attempt-interval-secs";
-
 
   private String graphiteHost;
   private int graphitePort;
@@ -46,7 +48,7 @@ public class GraphiteReporter extends AbstractReporter {
 
   private String serverFingerprint;
   private int minConnectAttemptIntervalSecs;
-  private Graphite graphite;
+  private GraphiteSender graphite;
   private long lastConnectAttemptTimestampMs;
 
   public GraphiteReporter() {
@@ -79,7 +81,14 @@ public class GraphiteReporter extends AbstractReporter {
     graphiteSocketAddr = new InetSocketAddress(graphiteHost, graphitePort);
 
     serverFingerprint = graphiteSocketAddr.getAddress() + ":" + graphiteSocketAddr.getPort();
-    this.graphite = new Graphite(graphiteSocketAddr);
+
+    if (conf.containsKey(GRAPHITE_PROTOCOL_OPTION) && ((String)conf.get(GRAPHITE_PROTOCOL_OPTION)).equalsIgnoreCase("udp")) {
+      // Use UDP client
+      this.graphite = new GraphiteUDP(graphiteSocketAddr);
+    } else {
+      // Default TCP client
+      this.graphite = new Graphite(graphiteSocketAddr);
+    }
     lastConnectAttemptTimestampMs = 0;
   }
 
