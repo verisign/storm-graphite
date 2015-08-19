@@ -1,3 +1,12 @@
+# 0.2.4 (August 18, 2015)
+
+IMPROVEMENTS
+
+* Added support for UDP graphite reporter.
+* Added configuration option `metrics.graphite.protocol`, which configures which Graphite reporter will be used.  This
+  configuration option defaults to use the TCP graphite reporter for backwards compatibility.  Set this option to 'udp'
+  to use a UDP reporter instead.
+
 # 0.2.3 (June 24, 2015)
 
 BUG FIXES
