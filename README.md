@@ -267,6 +267,8 @@ topology.metrics.consumer.register:
       metrics.graphite.port: "2003"
       metrics.graphite.prefix: "storm.test"
       metrics.graphite.min-connect-attempt-interval-secs: "5"
+      # Optional arguments can also be supplied to enable UDP
+      metrics.graphite.protocol: "udp"
 ```
 ##### Reporting Metrics to Kafka
 
