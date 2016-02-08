@@ -21,6 +21,7 @@ import com.verisign.storm.metrics.util.ConnectionFailureException;
 import org.apache.storm.metric.api.IMetricsConsumer;
 import org.apache.storm.task.IErrorReporter;
 import org.apache.storm.task.TopologyContext;
+import com.verisign.storm.metrics.util.TagsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,23 +122,16 @@ import java.util.Map;
  */
 public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
-  public static final String GRAPHITE_PREFIX_OPTION = "metrics.graphite.prefix";
   public static final String REPORTER_NAME = "metrics.reporter.name";
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
-  private static final String DEFAULT_PREFIX = "metrics";
   private static final String DEFAULT_REPORTER = GraphiteReporter.class.getCanonicalName();
 
-  private String graphitePrefix;
   private String stormId;
 
   protected AbstractReporter reporter;
 
   protected String getStormId() {
     return stormId;
-  }
-
-  protected String getGraphitePrefix() {
-    return graphitePrefix;
   }
 
   @Override
@@ -158,13 +152,6 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
     else {
       LOG.warn("No reference to configuration parameter registrationArgument found");
-    }
-
-    if (configMap.containsKey(GRAPHITE_PREFIX_OPTION)) {
-      graphitePrefix = (String) configMap.get(GRAPHITE_PREFIX_OPTION);
-    }
-    else {
-      graphitePrefix = DEFAULT_PREFIX;
     }
 
     if (!configMap.containsKey(REPORTER_NAME)) {
@@ -197,7 +184,7 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
     graphiteConnect();
     emptyBuffer();
-    String metricPrefix = constructMetricPrefix(graphitePrefix, taskInfo);
+    Map<String, String> tags = TagsHelper.convertToTags(stormId, taskInfo);
 
     for (DataPoint dataPoint : dataPoints) {
 
@@ -224,13 +211,13 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
           }
         }
 
-        appendToReporterBuffer(metricPrefix, bufferMap, taskInfo.timestamp);
+        appendToReporterBuffer(tags, bufferMap, taskInfo.timestamp);
       }
       else if (dataPoint.value instanceof Number) {
         Double dblValue = ((Number) dataPoint.value).doubleValue();
         HashMap<String, Double> metric = new HashMap<String, Double>();
         metric.put(dataPoint.name + "value", dblValue);
-        appendToReporterBuffer(metricPrefix, metric, taskInfo.timestamp);
+        appendToReporterBuffer(tags, metric, taskInfo.timestamp);
       }
       else {
         LOG.warn("Unrecognized metric value of type {} received. Discarding metric.",
@@ -258,6 +245,8 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
         result = ((Number) value).doubleValue();
       }
       else {
+        LOG.warn("Unrecognized value type {} received. Can't convert to double. Discarding metric.",
+                value.getClass().getName());
         result = null;
       }
 
@@ -267,32 +256,6 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
       LOG.warn("Metric with key {} has a value of null. Discarding metric.", key);
       return null;
     }
-  }
-  /**
-   * Constructs a fully qualified metric prefix.
-   *
-   * @param taskInfo  The information regarding the context in which the data point is supplied
-   *
-   * @return A fully qualified metric prefix.
-   */
-  private String constructMetricPrefix(String prefixFromConfig, TaskInfo taskInfo) {
-    StringBuilder sb = new StringBuilder();
-    if (prefixFromConfig != null && !prefixFromConfig.isEmpty()) {
-      sb.append(prefixFromConfig).append(".");
-    }
-    sb.append(removeNonce(stormId)).append(".");
-    sb.append(taskInfo.srcComponentId).append(".");
-    sb.append(taskInfo.srcWorkerHost).append(".");
-    sb.append(taskInfo.srcWorkerPort).append(".");
-    sb.append(taskInfo.srcTaskId);
-    return sb.toString();
-  }
-
-  /**
-   * Removes nonce appended to topology name (e.g. "Example-Topology-1-2345" -> "Example-Topology")
-   */
-  private String removeNonce(String topologyId) {
-    return topologyId.substring(0, topologyId.substring(0, topologyId.lastIndexOf("-")).lastIndexOf("-"));
   }
 
   protected void graphiteConnect() {
@@ -305,13 +268,13 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
   }
 
-  protected void appendToReporterBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
+  protected void appendToReporterBuffer(Map<String, String> tags, Map<String, Double> metrics, long timestamp) {
     if (reporter != null) {
       if (!metrics.isEmpty()) {
-        reporter.appendToBuffer(prefix, metrics, timestamp);
+        reporter.appendToBuffer(tags, metrics, timestamp);
       }
       else {
-        LOG.debug("Dropping metrics map with prefix {} because it is empty.", prefix);
+        LOG.debug("Dropping metrics map with prefix {} because it is empty.", tags.toString());
       }
     }
     else {

@@ -17,6 +17,7 @@ package com.verisign.storm.metrics.reporters;
 import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
 import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
 import com.verisign.storm.metrics.serializers.AvroRecordSerializer;
+import com.verisign.storm.metrics.util.TagsHelper;
 import io.confluent.kafka.schemaregistry.client.LocalSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
@@ -54,7 +55,6 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 
 public class BaseKafkaReporterTest {
-  private int testCount = 10;
   private Logger LOG = LoggerFactory.getLogger(BaseKafkaReporterTest.class);
 
   private String testZkHost = "127.0.0.1";
@@ -94,36 +94,9 @@ public class BaseKafkaReporterTest {
     }
   }
 
-  @DataProvider(name = "metrics") public Object[][] metricsProvider() {
-    Random rng = new Random(System.currentTimeMillis());
-    Object[][] testData = new Object[testCount][];
 
-    for (int i = 0; i < testCount; i++) {
-      List<Object> data = new ArrayList<Object>();
-
-      String prefix = new BigInteger(100, rng).toString(32);
-      data.add(prefix);
-
-      String metricName = new BigInteger(50, rng).toString(32);
-      data.add(metricName);
-
-      Double metricValue = rng.nextDouble();
-      data.add(metricValue);
-
-      Double truncatedValue = Double.parseDouble(String.format("%2.2f", metricValue));
-      data.add(truncatedValue);
-
-      Long timestamp = System.currentTimeMillis();
-      data.add(timestamp);
-
-      testData[i] = data.toArray();
-    }
-
-    return testData;
-  }
-
-  @Test(dataProvider = "metrics")
-  public void avroKafkaReporterTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
+  @Test(dataProvider = "kafkaMetrics")
+  public void avroKafkaReporterTest(HashMap<String, String> tags, String metricKey, Double value, Double truncatedValue,
       long timestamp) {
 
     /* GIVEN: A Zookeeper instance, a Kafka broker, and a the Kafka reporter we're testing */
@@ -131,7 +104,7 @@ public class BaseKafkaReporterTest {
     SimpleConsumer kafkaConsumer = new SimpleConsumer(testKafkaHost, testKafkaPort, 10000, 1024000, "simpleConsumer");
     
     /* WHEN: A new metric is appended to the reporter's buffer and we tell the reporter to send its data */
-    submitMetricToReporter(metricPrefix, metricKey, value, timestamp);
+    submitMetricToReporter(tags, metricKey, value, timestamp);
 
     /* WHEN: A Kafka consumer reads the latest message from the same topic on the Kafka server */
     byte[] bytes = fetchLatestRecordPayloadBytes(kafkaConsumer);
@@ -147,14 +120,14 @@ public class BaseKafkaReporterTest {
 
     /* THEN: The field values of the decoded record should be the same as those of the input fields. */
     assertThat(result).isNotNull();
-    assertThat(result.get("prefix")).isEqualTo(metricPrefix);
+    assertThat(result.get("prefix")).isEqualTo(TagsHelper.constructMetricPrefix(TagsHelper.DEFAULT_PREFIX, tags));
     assertThat(result.get("reportTime")).isEqualTo(timestamp);
     assertThat(((Map) result.get("metricValues")).get(metricKey)).isEqualTo(truncatedValue);
   }
 
 
-  @Test(dataProvider = "metrics")
-  public void schemaRegistryKafkaReporterTest(String metricPrefix, String metricKey, Double value,
+  @Test(dataProvider = "kafkaMetrics")
+  public void schemaRegistryKafkaReporterTest(HashMap<String,String> tags, String metricKey, Double value,
       Double truncatedValue,
       long timestamp) {
 
@@ -164,7 +137,7 @@ public class BaseKafkaReporterTest {
     KafkaAvroDecoder decoder = new KafkaAvroDecoder(schemaRegistryClient);
 
     /* WHEN: A new metric is appended to the reporter's buffer and we tell the reporter to send its data */
-    submitMetricToReporter(metricPrefix, metricKey, value, timestamp);
+    submitMetricToReporter(tags, metricKey, value, timestamp);
 
     /* WHEN: A Kafka consumer reads the latest message from the same topic on the Kafka server */
     byte[] bytes = fetchLatestRecordPayloadBytes(kafkaConsumer);
@@ -180,16 +153,16 @@ public class BaseKafkaReporterTest {
 
     /* THEN: The field values of the decoded record should be the same as those of the input fields. */
     assertThat(result).isNotNull();
-    assertThat(result.get("prefix")).isEqualTo(metricPrefix);
+    assertThat(result.get("prefix")).isEqualTo(TagsHelper.constructMetricPrefix(TagsHelper.DEFAULT_PREFIX, tags));
     assertThat(result.get("reportTime")).isEqualTo(timestamp);
     assertThat(((Map) result.get("metricValues")).get(metricKey)).isEqualTo(truncatedValue);
   }
 
-  private void submitMetricToReporter(String metricPrefix, String metricKey, Double value, long timestamp) {
+  private void submitMetricToReporter(HashMap<String,String> tags, String metricKey, Double value, long timestamp) {
     HashMap<String, Double> metrics = new HashMap<String, Double>();
     metrics.put(metricKey, value);
 
-    kafkaReporter.appendToBuffer(metricPrefix, metrics, timestamp);
+    kafkaReporter.appendToBuffer(tags, metrics, timestamp);
     try {
       kafkaReporter.sendBufferContents();
 
@@ -286,4 +259,9 @@ public class BaseKafkaReporterTest {
     Decoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
     return reader.read(null, decoder);
   }
+  @DataProvider(name = "kafkaMetrics")
+  public Object[][] kafkaMetricsProvider() {
+    return new ReporterDataProvider().kafkaMetricsProvider();
+  }
+
 }

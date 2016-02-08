@@ -19,6 +19,7 @@ import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
 import com.verisign.storm.metrics.util.GraphiteCodec;
+import com.verisign.storm.metrics.util.TagsHelper;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -50,6 +51,7 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
   private KafkaProducer kafkaProducer;
 
   private int failures;
+  private String prefix;
 
   public BaseKafkaReporter() {
     super();
@@ -88,6 +90,7 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
     kafkaProducer = configureKafkaProducer(producerProps);
     buffer = new LinkedList<GraphingMetrics>();
     failures = 0;
+    prefix = TagsHelper.getPrefix(conf);
   }
 
   public abstract KafkaProducer<GenericRecord, GenericRecord> configureKafkaProducer(Properties producerProps);
@@ -98,7 +101,7 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
   @Override public void disconnect() throws ConnectionFailureException {
   }
 
-  @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
+  public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     Map<String, Double> metricsDoubleMap = new HashMap<String, Double>();
 
     for (Entry<String, Double> entry : metrics.entrySet()) {
@@ -116,6 +119,10 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
     }
 
     buffer.add(new GraphingMetrics(prefix, timestamp, metricsDoubleMap));
+  }
+
+  public void appendToBuffer(Map<String, String> tags, Map<String, Double> metrics, long timestamp){
+    appendToBuffer(TagsHelper.constructMetricPrefix(prefix, tags), metrics, timestamp);
   }
 
   @Override public void emptyBuffer() {

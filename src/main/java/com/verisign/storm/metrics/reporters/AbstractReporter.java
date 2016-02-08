@@ -16,7 +16,7 @@ public abstract class AbstractReporter {
 
   public abstract void disconnect() throws ConnectionFailureException;
 
-  public abstract void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp);
+  public abstract void appendToBuffer(Map<String, String> tags, Map<String, Double> metrics, long timestamp);
 
   public abstract void emptyBuffer();
 

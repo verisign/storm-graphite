@@ -22,6 +22,7 @@ import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.util.ConfigurableSocketFactory;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
 import com.verisign.storm.metrics.util.GraphiteCodec;
+import com.verisign.storm.metrics.util.TagsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,7 @@ public class GraphiteReporter extends AbstractReporter {
   private int minConnectAttemptIntervalSecs;
   private GraphiteSender graphite;
   private long lastConnectAttemptTimestampMs;
+  private String prefix;
 
   public GraphiteReporter() {
     super();
@@ -111,9 +113,8 @@ public class GraphiteReporter extends AbstractReporter {
       this.graphite = new Graphite(graphiteSocketAddr, socketFactory);
     }
     lastConnectAttemptTimestampMs = 0;
+    prefix = TagsHelper.getPrefix(conf);
   }
-
-
 
   @Override public String getBackendFingerprint() {
     return serverFingerprint;
@@ -150,7 +151,7 @@ public class GraphiteReporter extends AbstractReporter {
   @Override public void emptyBuffer() {
   }
 
-  @Override public void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
+  private void appendToBuffer(String prefix, Map<String, Double> metrics, long timestamp) {
     try {
       if(!graphite.isConnected()) {
         graphite.connect();
@@ -169,6 +170,11 @@ public class GraphiteReporter extends AbstractReporter {
     catch (NumberFormatException nfe) {
       handleFailedSend(nfe);
     }
+  }
+
+  @Override
+  public void appendToBuffer(Map<String, String> tags, Map<String, Double> metrics, long timestamp) {
+    appendToBuffer(TagsHelper.constructMetricPrefix(prefix, tags), metrics, timestamp);
   }
 
   @Override public void sendBufferContents() throws IOException {
