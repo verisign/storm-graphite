@@ -16,15 +16,10 @@ import java.util.HashMap;
 
 public class GraphiteSocketSettingsTest {
 
-    private InetSocketAddress graphiteSocketAddress;
     private ServerSocketChannel graphiteServer;
 
     @BeforeTest
     public void setUp() throws IOException {
-        String graphiteHost = "127.0.0.1";
-        int graphitePort = 2003;
-
-        graphiteSocketAddress = new InetSocketAddress(graphiteHost, graphitePort);
 
         graphiteServer = ServerSocketChannel.open();
     }
@@ -38,8 +33,9 @@ public class GraphiteSocketSettingsTest {
 
     @Test
     public void testConnectTimeout() throws IOException {
+        String graphiteHost = "127.0.0.1";
         // Backlog of one socket
-        graphiteServer.socket().bind(graphiteSocketAddress, 1);
+        graphiteServer.socket().bind(new InetSocketAddress(graphiteHost, 0), 1);
         graphiteServer.configureBlocking(false);
 
         graphiteServer.accept();
@@ -49,8 +45,8 @@ public class GraphiteSocketSettingsTest {
 
         HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
 
-        reporterConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteSocketAddress.getHostName());
-        reporterConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, String.valueOf(graphiteSocketAddress.getPort()));
+        reporterConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteHost);
+        reporterConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, String.valueOf(graphiteServer.socket().getLocalPort()));
         reporterConfig.put(GraphiteReporter.GRAPHITE_CONNECT_TIMEOUT, 1);
 
         GraphiteReporter graphiteReporter = new GraphiteReporter();
