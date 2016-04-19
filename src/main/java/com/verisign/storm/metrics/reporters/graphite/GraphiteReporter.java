@@ -19,6 +19,7 @@ import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
 import com.google.common.base.Throwables;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.util.ConfigurableSocketFactory;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
 import com.verisign.storm.metrics.util.GraphiteCodec;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class is a wrapper for the Graphite class in the Metrics library.  It encapsulates the handling of errors that
@@ -36,9 +38,14 @@ public class GraphiteReporter extends AbstractReporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteReporter.class);
   private static final int DEFAULT_MIN_CONNECT_ATTEMPT_INTERVAL_SECS = 5;
+  private static final int DEFAULT_READ_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(60);
+  private static final int DEFAULT_CONNECT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(60);
+
   public static final String GRAPHITE_HOST_OPTION = "metrics.graphite.host";
   public static final String GRAPHITE_PORT_OPTION = "metrics.graphite.port";
   public static final String GRAPHITE_PROTOCOL_OPTION = "metrics.graphite.protocol";
+  public static final String GRAPHITE_CONNECT_TIMEOUT = "metrics.graphite.connect.timeout";
+  public static final String GRAPHITE_READ_TIMEOUT = "metrics.graphite.read.timeout";
   public static final String GRAPHITE_MIN_CONNECT_ATTEMPT_INTERVAL_SECS_OPTION
       = "metrics.graphite.min-connect-attempt-interval-secs";
 
@@ -87,7 +94,21 @@ public class GraphiteReporter extends AbstractReporter {
       this.graphite = new GraphiteUDP(graphiteSocketAddr);
     } else {
       // Default TCP client
-      this.graphite = new Graphite(graphiteSocketAddr);
+      int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+      if (conf.containsKey(GRAPHITE_CONNECT_TIMEOUT)) {
+        connectTimeout = Integer.parseInt(conf.get(GRAPHITE_CONNECT_TIMEOUT).toString());
+      }
+
+      int readTimeout = DEFAULT_READ_TIMEOUT;
+      if (conf.containsKey(GRAPHITE_READ_TIMEOUT)) {
+        readTimeout = Integer.parseInt(conf.get(GRAPHITE_READ_TIMEOUT).toString());
+      }
+
+      ConfigurableSocketFactory socketFactory = new ConfigurableSocketFactory();
+      socketFactory.setConnectTimeout(connectTimeout);
+      socketFactory.setReadTimeout(readTimeout);
+
+      this.graphite = new Graphite(graphiteSocketAddr, socketFactory);
     }
     lastConnectAttemptTimestampMs = 0;
   }
