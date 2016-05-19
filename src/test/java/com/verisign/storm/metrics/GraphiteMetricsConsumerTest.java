@@ -14,10 +14,10 @@
 */
 package com.verisign.storm.metrics;
 
-import backtype.storm.metric.api.IMetricsConsumer.DataPoint;
-import backtype.storm.metric.api.IMetricsConsumer.TaskInfo;
-import backtype.storm.task.IErrorReporter;
-import backtype.storm.task.TopologyContext;
+import org.apache.storm.metric.api.IMetricsConsumer.DataPoint;
+import org.apache.storm.metric.api.IMetricsConsumer.TaskInfo;
+import org.apache.storm.task.IErrorReporter;
+import org.apache.storm.task.TopologyContext;
 import com.google.common.collect.Maps;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter;
