@@ -106,6 +106,37 @@ public class GraphiteMetricsConsumerTest {
     assertThat(consumer.reporter).isNotNull();
   }
 
+  /**
+   * Test with alternate key pattern definition.
+   */
+  @Test public void shouldInitializeGraphiteReporterAlternateKeyPattern() {
+    // Given a Graphite configuration and topology context
+    Map<String, String> stormConfig = Maps.newHashMap();
+    stormConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, testGraphiteHost);
+
+    Map<String, String> registrationArgument = Maps.newHashMap();
+    registrationArgument.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
+    registrationArgument.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
+
+    // Define our custom key pattern
+    registrationArgument.put(GraphiteMetricsConsumer.GRAPHITE_KEY_PATTERN_OPTION, "%%TOPOLOGY%%.%%COMPONENT%%.%%HOSTNAME%%");
+
+    TopologyContext topologyContext = mock(TopologyContext.class);
+    when(topologyContext.getStormId()).thenReturn(testTopologyName);
+    IErrorReporter errorReporter = mock(IErrorReporter.class);
+
+    // When the metrics consumer initializes
+    consumer.prepare(stormConfig, registrationArgument, topologyContext, errorReporter);
+
+    // Then the reporter should be initialized with a Graphite reporter
+    verify(topologyContext).getStormId();
+    assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
+    assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
+    assertThat(consumer.reporter).isInstanceOf(GraphiteReporter.class);
+    assertThat(consumer.reporter).isNotNull();
+    assertThat(consumer.getGraphiteKeyPatternOption()).isEqualTo("%%TOPOLOGY%%.%%COMPONENT%%.%%HOSTNAME%%");
+  }
+
   @Test public void shouldInitializeKafkaReporter() {
     // Given a Kafka configuration and topology context
     Map<String, String> stormConfig = Maps.newHashMap();
@@ -221,6 +252,35 @@ public class GraphiteMetricsConsumerTest {
       }
     }
     return expMap;
+  }
+
+  @Test(dependsOnMethods = { "shouldInitializeGraphiteReporter" })
+  public void testAlternateKeyPattern() {
+    //Given a consumer
+    GraphiteMetricsConsumer consumer = spy(new GraphiteMetricsConsumer());
+
+    Map<String, String> stormConfig = Maps.newHashMap();
+    stormConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, testGraphiteHost);
+    stormConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
+    stormConfig.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
+    stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, GraphiteReporter.class.getName());
+    stormConfig.put(GraphiteMetricsConsumer.GRAPHITE_KEY_PATTERN_OPTION, "%%TOPOLOGY%%.%%COMPONENT%%.%%HOSTNAME%%");
+
+    HashMap<String, Object> registrationArgs = new HashMap<String, Object>();
+    TopologyContext context = mock(TopologyContext.class);
+    when(context.getStormId()).thenReturn(testTopologyName);
+    IErrorReporter errorReporter = mock(IErrorReporter.class);
+    consumer.prepare(stormConfig, registrationArgs, context, errorReporter);
+
+    // Construct fake taskInfo
+    TaskInfo taskInfo = new TaskInfo("Hostname.com", 6701, "RandomBolt", 33, 123123123L, 60);
+
+    // Call method
+    String resultKey = consumer.constructMetricPrefix(consumer.getGraphitePrefix(), taskInfo);
+
+    // Verify result
+    final String expectedResult = testPrefix + ".Example-Storm-Topology-Name.RandomBolt.Hostname.com";
+    assertThat(resultKey).isEqualTo(expectedResult);
   }
 
   private String getExpectedMetricPrefix() {
