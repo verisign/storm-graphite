@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
+import com.verisign.storm.metrics.util.TokenReplacement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,8 @@ import java.util.Map;
  *   conf.put("metrics.graphite.prefix", "<DOT DELIMITED PREFIX>");
  *   // Optional settings
  *   conf.put("metrics.graphite.min-connect-attempt-interval-secs", "5");
+ *   // Optional configurable key pattern
+ *   conf.put("metrics.graphite.keypattern", "%%TOPOLOGY%%.%%COMPONENT%%.%%HOSTNAME%%.%%WORKER_PORT%%.%%TASKID%%");
  * }
  * </pre>
  *
@@ -87,6 +90,7 @@ import java.util.Map;
  *         metrics.graphite.port: "<GRAPHITE PORT>"
  *         metrics.graphite.prefix: "<DOT DELIMITED PREFIX>"
  *         metrics.graphite.min-connect-attempt-interval-secs: "5"
+ *         metrics.graphite.keypattern: "%%TOPOLOGY%%.%%COMPONENT%%.%%HOSTNAME%%.%%WORKER_PORT%%.%%TASKID%%"
  * }
  * </pre>
  *
@@ -126,9 +130,16 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
   private static final Logger LOG = LoggerFactory.getLogger(GraphiteMetricsConsumer.class);
   private static final String DEFAULT_PREFIX = "metrics";
   private static final String DEFAULT_REPORTER = GraphiteReporter.class.getCanonicalName();
+  public static final String GRAPHITE_KEY_PATTERN_OPTION = "metrics.graphite.keypattern";
+  public static final String DEFAULT_KEY_PATTERN = "%%TOPOLOGY%%.%%COMPONENT%%.%%HOSTNAME%%.%%WORKER_PORT%%.%%TASKID%%";
 
   private String graphitePrefix;
   private String stormId;
+
+  /**
+   * This holds the pattern of our generated graphite keys.
+   */
+  private String keyPattern;
 
   protected AbstractReporter reporter;
 
@@ -138,6 +149,10 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
 
   protected String getGraphitePrefix() {
     return graphitePrefix;
+  }
+
+  protected String getGraphiteKeyPatternOption() {
+    return keyPattern;
   }
 
   @Override
@@ -180,6 +195,12 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     }
 
     stormId = context.getStormId();
+
+    // Setup key pattern
+    keyPattern = DEFAULT_KEY_PATTERN;
+    if (configMap.containsKey(GRAPHITE_KEY_PATTERN_OPTION)) {
+      keyPattern = (String) configMap.get(GRAPHITE_KEY_PATTERN_OPTION);
+    }
   }
 
   private AbstractReporter configureReporter(@SuppressWarnings("rawtypes") Map reporterConfig)
@@ -275,17 +296,24 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
    *
    * @return A fully qualified metric prefix.
    */
-  private String constructMetricPrefix(String prefixFromConfig, TaskInfo taskInfo) {
+  protected String constructMetricPrefix(String prefixFromConfig, TaskInfo taskInfo) {
     StringBuilder sb = new StringBuilder();
     if (prefixFromConfig != null && !prefixFromConfig.isEmpty()) {
       sb.append(prefixFromConfig).append(".");
     }
-    sb.append(removeNonce(stormId)).append(".");
-    sb.append(taskInfo.srcComponentId).append(".");
-    sb.append(taskInfo.srcWorkerHost).append(".");
-    sb.append(taskInfo.srcWorkerPort).append(".");
-    sb.append(taskInfo.srcTaskId);
-    return sb.toString();
+    // Append our key pattern
+    sb.append(keyPattern);
+
+    // Generate tokens
+    Map<String, String> tokens = new HashMap<String, String>();
+    tokens.put("TOPOLOGY", removeNonce(stormId));
+    tokens.put("COMPONENT", taskInfo.srcComponentId);
+    tokens.put("HOSTNAME", taskInfo.srcWorkerHost);
+    tokens.put("WORKER_PORT", String.valueOf(taskInfo.srcWorkerPort));
+    tokens.put("TASKID", String.valueOf(taskInfo.srcTaskId));
+
+    // Replace tokens
+    return TokenReplacement.replaceTokens(sb.toString(), tokens);
   }
 
   /**
