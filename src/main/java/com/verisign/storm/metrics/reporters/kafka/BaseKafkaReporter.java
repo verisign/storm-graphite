@@ -20,9 +20,9 @@ import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
 import com.verisign.storm.metrics.util.GraphiteCodec;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.commons.lang.SerializationException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

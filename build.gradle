@@ -14,7 +14,7 @@ buildscript {
 }
 
 group = 'com.verisign.storm.metrics'
-version = '0.2.4-SNAPSHOT'
+version = '1.0.0-SNAPSHOT'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
@@ -88,7 +88,7 @@ dependencies {
   )
 
   compile(
-      ['org.apache.storm:storm-core:0.9.3'],
+      ['org.apache.storm:storm-core:1.0.1'],
   ) {
     // The log4j-over-slf4j dependency conflicts with slf4j-log4j12
     exclude module: 'log4j-over-slf4j'
@@ -122,6 +122,7 @@ task javadocJar(type: Jar, dependsOn: 'javadoc') {
 artifacts {
   archives sourcesJar
   archives javadocJar
+  archives shadowJar
 }
 
 test {

@@ -14,13 +14,13 @@
  */
 package com.verisign.storm.metrics;
 
-import backtype.storm.metric.api.IMetricsConsumer;
-import backtype.storm.task.IErrorReporter;
-import backtype.storm.task.TopologyContext;
 import com.google.common.base.Throwables;
 import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
+import org.apache.storm.metric.api.IMetricsConsumer;
+import org.apache.storm.task.IErrorReporter;
+import org.apache.storm.task.TopologyContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
