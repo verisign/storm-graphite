@@ -90,6 +90,18 @@ public class ReporterDataProvider {
     return testData;
   }
 
+  public Object[][] dogMetricProvider() {
+    Map<String, String> tags1 = buildTags1();
+
+    return new Object[][]{
+      new Object[]{tags1, "latency", "latencymetric1", 0.002, new Long("1408393534971")},
+      new Object[]{tags1, "guage", "metric2", 0.00, new Long("1408393534971")},
+      new Object[]{tags1, "latency", "latencymetric3", 3.14, new Long("1408393534971")},
+      new Object[]{tags1, "unknown", "metric3", 99.0, new Long("1408393534971")},
+      new Object[]{tags1, "guage", "metric4", 1e3, new Long("1408393534971")}
+    };
+  }
+
   private Map<String, String> buildTags(String[] keys) {
     HashMap<String, String> tags = new HashMap<String, String>();
     for (String key : keys) {

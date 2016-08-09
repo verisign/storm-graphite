@@ -78,6 +78,7 @@ dependencies {
       ['com.google.guava:guava:17.0'],
       ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
       ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
+      ["org.coursera:metrics-datadog:1.1.3"],
       ["com.twitter:bijection-core_2.10:0.7.0"],
       ["com.twitter:bijection-avro_2.10:0.7.0"],
       ["com.twitter:util-core_2.10:6.1.0"],
