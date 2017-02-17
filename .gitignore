@@ -8,3 +8,9 @@ build/*
 *.ipr
 *.iws
 out/
+bin/
+.classpath
+.project
+.settings/
+/.gradle/
+/build/

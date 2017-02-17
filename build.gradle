@@ -4,11 +4,12 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
-    classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
+    classpath 'net.saliman:gradle-cobertura-plugin:2.4.0'
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
     // https://github.com/kt3k/coveralls-gradle-plugin
-    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.3.1'
-    classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.0'
+    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.1'
+    // classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.6'
+    classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.6'
     classpath 'com.commercehub.gradle.plugin:gradle-avro-plugin:0.3.4'
   }
 }
@@ -36,7 +37,7 @@ def buildTime() {
 }
 
 ext {
-  jdkVersion = '1.7'
+  jdkVersion = '1.8'
   metricsVersion = '3.1.0'
 
   // RPM metadata
@@ -150,7 +151,7 @@ cobertura {
 }
 
 task createWrapper(type: Wrapper) {
-  gradleVersion = '2.3'
+  gradleVersion = '3.3'
 }
 
 ospackage {
