@@ -14,21 +14,20 @@
  */
 package com.verisign.storm.metrics.reporters;
 
-import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
-import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
-import com.verisign.storm.metrics.serializers.AvroRecordSerializer;
-import io.confluent.kafka.schemaregistry.client.LocalSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
-import io.confluent.kafka.serializers.KafkaAvroDecoder;
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import kafka.api.FetchRequest;
-import kafka.api.FetchRequestBuilder;
-import kafka.javaapi.FetchResponse;
-import kafka.javaapi.consumer.SimpleConsumer;
-import kafka.message.Message;
-import kafka.message.MessageAndOffset;
-import kafka.server.KafkaConfig;
-import kafka.server.KafkaServerStartable;
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.fest.assertions.api.Assertions.fail;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Random;
+
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Decoder;
@@ -45,13 +44,23 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.util.*;
+import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
+import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
+import com.verisign.storm.metrics.serializers.AvroRecordSerializer;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.fail;
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.serializers.KafkaAvroDecoder;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import kafka.api.FetchRequest;
+import kafka.api.FetchRequestBuilder;
+import kafka.javaapi.FetchResponse;
+import kafka.javaapi.consumer.SimpleConsumer;
+import kafka.message.Message;
+import kafka.message.MessageAndOffset;
+import kafka.server.KafkaConfig;
+import kafka.server.KafkaServerStartable;
 
 public class BaseKafkaReporterTest {
   private int testCount = 10;
@@ -69,7 +78,7 @@ public class BaseKafkaReporterTest {
   private KafkaServerStartable kafkaServer;
   private TestingServer zookeeper;
   private BaseKafkaReporter kafkaReporter;
-  private LocalSchemaRegistryClient schemaRegistryClient;
+  private SchemaRegistryClient schemaRegistryClient;
 
   @BeforeClass private void initializeCluster() {
     try {
@@ -122,7 +131,8 @@ public class BaseKafkaReporterTest {
     return testData;
   }
 
-  @Test(dataProvider = "metrics")
+  @SuppressWarnings("rawtypes")
+@Test(dataProvider = "metrics")
   public void avroKafkaReporterTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
       long timestamp) {
 
@@ -153,7 +163,8 @@ public class BaseKafkaReporterTest {
   }
 
 
-  @Test(dataProvider = "metrics")
+  @SuppressWarnings("rawtypes")
+@Test(dataProvider = "metrics")
   public void schemaRegistryKafkaReporterTest(String metricPrefix, String metricKey, Double value,
       Double truncatedValue,
       long timestamp) {
@@ -242,7 +253,7 @@ public class BaseKafkaReporterTest {
     reporterConfig.put("parallelism.hint", 1);
     reporterConfig.put("some.value.that.is.null", null);
 
-    schemaRegistryClient = new LocalSchemaRegistryClient();
+    schemaRegistryClient = new MockSchemaRegistryClient();
     try {
       schemaRegistryClient.register(destinationTopic + "-key", GraphingMetrics.getClassSchema());
     }
@@ -256,7 +267,8 @@ public class BaseKafkaReporterTest {
     final KafkaAvroSerializer serializer = new KafkaAvroSerializer(schemaRegistryClient);
 
     kafkaReporter = new BaseKafkaReporter() {
-      @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+      @SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
         return new KafkaProducer<Object, Object>(producerProps, serializer, serializer);
       }
     };
@@ -273,7 +285,8 @@ public class BaseKafkaReporterTest {
     reporterConfig.put("some.value.that.is.null", null);
 
     kafkaReporter = new BaseKafkaReporter() {
-      @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+      @SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
         AvroRecordSerializer serializer = new AvroRecordSerializer();
         return new KafkaProducer<GenericRecord, GenericRecord>(producerProps, serializer, serializer);
       }

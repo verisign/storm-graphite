@@ -14,11 +14,13 @@
  */
 package com.verisign.storm.metrics.reporters.kafka;
 
-import com.google.common.base.Throwables;
-import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
-import com.verisign.storm.metrics.reporters.AbstractReporter;
-import com.verisign.storm.metrics.util.ConnectionFailureException;
-import com.verisign.storm.metrics.util.GraphiteCodec;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -26,12 +28,11 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
+import com.google.common.base.Throwables;
+import com.verisign.ie.styx.avro.graphingMetrics.GraphingMetrics;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
+import com.verisign.storm.metrics.util.GraphiteCodec;
 
 /**
  * This class encapsulates an Apache Kafka producer, sending generated metrics into a configurable Kafka topic.
@@ -47,7 +48,8 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
   private String kafkaBrokerList;
   private LinkedList<GraphingMetrics> buffer;
 
-  private KafkaProducer kafkaProducer;
+  @SuppressWarnings("rawtypes")
+private KafkaProducer kafkaProducer;
 
   private int failures;
 
@@ -122,7 +124,8 @@ public abstract class BaseKafkaReporter extends AbstractReporter {
     buffer.clear();
   }
 
-  @Override public void sendBufferContents() throws IOException {
+  @SuppressWarnings("unchecked")
+@Override public void sendBufferContents() throws IOException {
     for (GraphingMetrics metric : buffer) {
       try {
         ProducerRecord<GenericRecord, GenericRecord> record = new ProducerRecord<GenericRecord, GenericRecord>(

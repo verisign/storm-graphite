@@ -14,12 +14,12 @@
  */
 package com.verisign.storm.metrics.util;
 
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import static org.fest.assertions.api.Assertions.assertThat;
 
 import java.util.HashMap;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 public class GraphiteCodecTest {
 

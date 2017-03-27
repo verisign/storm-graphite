@@ -14,28 +14,37 @@
 */
 package com.verisign.storm.metrics;
 
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.storm.metric.api.IMetricsConsumer.DataPoint;
 import org.apache.storm.metric.api.IMetricsConsumer.TaskInfo;
 import org.apache.storm.task.IErrorReporter;
 import org.apache.storm.task.TopologyContext;
-import com.google.common.collect.Maps;
-import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
-import com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter;
-import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.ServerSocketChannel;
-import java.util.*;
-
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.google.common.collect.Maps;
+import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
+import com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter;
+import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
 
 @SuppressWarnings("unchecked")
 public class GraphiteMetricsConsumerTest {

@@ -1,9 +1,9 @@
 package com.verisign.storm.metrics.reporters;
 
-import com.verisign.storm.metrics.util.ConnectionFailureException;
-
 import java.io.IOException;
 import java.util.Map;
+
+import com.verisign.storm.metrics.util.ConnectionFailureException;
 
 public abstract class AbstractReporter {
 

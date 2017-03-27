@@ -4,17 +4,18 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
-    classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
+    classpath 'net.saliman:gradle-cobertura-plugin:2.4.0'
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
     // https://github.com/kt3k/coveralls-gradle-plugin
-    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.3.1'
-    classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.0'
+    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.1'
+    // classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.6'
+    classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.6'
     classpath 'com.commercehub.gradle.plugin:gradle-avro-plugin:0.3.4'
   }
 }
 
 group = 'com.verisign.storm.metrics'
-version = '1.0.0-SNAPSHOT'
+version = '1.0.2'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
@@ -36,7 +37,7 @@ def buildTime() {
 }
 
 ext {
-  jdkVersion = '1.7'
+  jdkVersion = '1.8'
   metricsVersion = '3.1.0'
 
   // RPM metadata
@@ -75,16 +76,16 @@ repositories {
 dependencies {
 
   compile(
-      ['com.google.guava:guava:17.0'],
+      ['com.google.guava:guava:21.0'],
       ["io.dropwizard.metrics:metrics-core:${metricsVersion}"],
       ["io.dropwizard.metrics:metrics-graphite:${metricsVersion}"],
-      ["com.twitter:bijection-core_2.10:0.7.0"],
-      ["com.twitter:bijection-avro_2.10:0.7.0"],
-      ["com.twitter:util-core_2.10:6.1.0"],
+      ["com.twitter:bijection-core_2.10:0.9.5"],
+      ["com.twitter:bijection-avro_2.10:0.9.5"],
+      ["com.twitter:util-core_2.10:6.34.0"],
       ["org.apache.kafka:kafka_2.10:0.8.2.0-cp"],
-      ["io.confluent:kafka-avro-serializer:1.0"],
-      ["io.confluent:kafka-schema-registry-client:1.0"],
-      ["org.apache.avro:avro:1.7.6"]
+      ["io.confluent:kafka-avro-serializer:3.1.2"],
+      ["io.confluent:kafka-schema-registry-client:3.1.2"],
+      ["org.apache.avro:avro:1.8.1"]
   )
 
   compile(
@@ -95,18 +96,21 @@ dependencies {
   }
 
   testCompile(
-      ['org.apache.curator:curator-test:2.6.0'],
-      ['org.apache.curator:curator-framework:2.6.0'],
+      ['org.apache.curator:curator-test:3.2.1'],
+      ['org.apache.curator:curator-framework:3.2.1'],
       ['org.uncommons:reportng:1.1.4'],
-      ['org.mockito:mockito-all:1.9.5'],
+      ['org.mockito:mockito-all:2.0.2-beta'],
       ['org.easytesting:fest-assert-core:2.0M10'],
-      ['org.testng:testng:6.8.8'],
+      ['org.testng:testng:6.10'],
       // Manually require Google Guice.  This is a required workaround for a known issue with TestNG 6.x.
       // (Gradle will fail to run tests otherwise.)
-      ['com.google.inject:guice:3.0'],
-      ['org.apache.commons:commons-lang3:3.4']
+      ['com.google.inject:guice:4.0-beta5'],
+      ['org.apache.commons:commons-lang3:3.5']
   )
 
+}
+compileJava {
+	options.compilerArgs << '-Xlint:unchecked'
 }
 
 task sourcesJar(type: Jar, dependsOn: 'classes') {
@@ -150,7 +154,7 @@ cobertura {
 }
 
 task createWrapper(type: Wrapper) {
-  gradleVersion = '2.3'
+  gradleVersion = '3.3'
 }
 
 ospackage {
@@ -221,8 +225,8 @@ shadowJar {
   dependencies {
     include(dependency("io.dropwizard.metrics:metrics-core:${metricsVersion}"))
     include(dependency("io.dropwizard.metrics:metrics-graphite:${metricsVersion}"))
-    include(dependency("io.confluent:kafka-avro-serializer:1.0"))
-    include(dependency("io.confluent:kafka-schema-registry-client:1.0"))
+    include(dependency("io.confluent:kafka-avro-serializer:3.1.2"))
+    include(dependency("io.confluent:kafka-schema-registry-client:3.1.2"))
   }
 }
 

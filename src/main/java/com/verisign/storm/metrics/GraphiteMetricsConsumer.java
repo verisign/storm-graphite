@@ -14,21 +14,22 @@
  */
 package com.verisign.storm.metrics;
 
-import com.google.common.base.Throwables;
-import com.verisign.storm.metrics.reporters.AbstractReporter;
-import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
-import com.verisign.storm.metrics.util.ConnectionFailureException;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.storm.metric.api.IMetricsConsumer;
 import org.apache.storm.task.IErrorReporter;
 import org.apache.storm.task.TopologyContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.base.Throwables;
+import com.verisign.storm.metrics.reporters.AbstractReporter;
+import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
 
 /**
  * Listens for all of Storm's built-in metrics and forwards them to a Graphite server.
@@ -140,7 +141,8 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     return graphitePrefix;
   }
 
-  @Override
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+@Override
   public void prepare(Map config, Object registrationArgument, TopologyContext context, IErrorReporter errorReporter) {
 
     Map configMap = new HashMap<Object, Object>();
@@ -182,11 +184,13 @@ public class GraphiteMetricsConsumer implements IMetricsConsumer {
     stormId = context.getStormId();
   }
 
-  private AbstractReporter configureReporter(@SuppressWarnings("rawtypes") Map reporterConfig)
+  @SuppressWarnings("unchecked")
+private AbstractReporter configureReporter(@SuppressWarnings("rawtypes") Map reporterConfig)
       throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
       InvocationTargetException {
     String className = (String) reporterConfig.get(REPORTER_NAME);
-    Class reporterClass = Class.forName(className);
+    @SuppressWarnings("rawtypes")
+	Class reporterClass = Class.forName(className);
     AbstractReporter reporter = (AbstractReporter) reporterClass.newInstance();
     reporter.prepare(reporterConfig);
 

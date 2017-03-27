@@ -1,10 +1,11 @@
 package com.verisign.storm.metrics.reporters.kafka;
 
-import com.verisign.storm.metrics.serializers.AvroRecordSerializer;
+import java.util.Properties;
+
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
-import java.util.Properties;
+import com.verisign.storm.metrics.serializers.AvroRecordSerializer;
 
 public class AvroKafkaReporter extends BaseKafkaReporter {
 
@@ -12,7 +13,8 @@ public class AvroKafkaReporter extends BaseKafkaReporter {
     super();
   }
 
-  @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+@Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
     AvroRecordSerializer serializer = new AvroRecordSerializer();
     return new KafkaProducer<GenericRecord, GenericRecord>(producerProps, serializer, serializer);
   }
