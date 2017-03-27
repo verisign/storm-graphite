@@ -16,6 +16,7 @@ package com.verisign.storm.metrics.util;
 
 import java.io.IOException;
 
+@SuppressWarnings("serial")
 public class ConnectionFailureException extends IOException {
 
   public ConnectionFailureException(String s) {

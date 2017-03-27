@@ -15,7 +15,7 @@ buildscript {
 }
 
 group = 'com.verisign.storm.metrics'
-version = '1.0.1'
+version = '1.0.2'
 description = "An IMetricsConsumer that forwards Storm's built-in metrics to a Graphite server for real-time graphing."
 
 apply plugin: 'java'
@@ -108,6 +108,9 @@ dependencies {
       ['org.apache.commons:commons-lang3:3.5']
   )
 
+}
+compileJava {
+	options.compilerArgs << '-Xlint:unchecked'
 }
 
 task sourcesJar(type: Jar, dependsOn: 'classes') {

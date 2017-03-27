@@ -14,6 +14,14 @@
  */
 package com.verisign.storm.metrics.reporters.graphite;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
@@ -22,13 +30,6 @@ import com.verisign.storm.metrics.reporters.AbstractReporter;
 import com.verisign.storm.metrics.util.ConfigurableSocketFactory;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
 import com.verisign.storm.metrics.util.GraphiteCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This class is a wrapper for the Graphite class in the Metrics library.  It encapsulates the handling of errors that

@@ -1,11 +1,12 @@
 package com.verisign.storm.metrics.util;
 
-import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+
+import javax.net.SocketFactory;
 
 public class ConfigurableSocketFactory extends SocketFactory {
 

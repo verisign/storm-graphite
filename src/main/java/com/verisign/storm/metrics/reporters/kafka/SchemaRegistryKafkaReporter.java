@@ -1,10 +1,11 @@
 package com.verisign.storm.metrics.reporters.kafka;
 
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import java.util.Properties;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 
-import java.util.Properties;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 
 public class SchemaRegistryKafkaReporter extends BaseKafkaReporter {
 
@@ -15,7 +16,8 @@ public class SchemaRegistryKafkaReporter extends BaseKafkaReporter {
     super();
   }
 
-  @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+@Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
     String schemaRegistryUrl;
     Integer identityMapCapacity;
 

@@ -131,7 +131,8 @@ public class BaseKafkaReporterTest {
     return testData;
   }
 
-  @Test(dataProvider = "metrics")
+  @SuppressWarnings("rawtypes")
+@Test(dataProvider = "metrics")
   public void avroKafkaReporterTest(String metricPrefix, String metricKey, Double value, Double truncatedValue,
       long timestamp) {
 
@@ -162,7 +163,8 @@ public class BaseKafkaReporterTest {
   }
 
 
-  @Test(dataProvider = "metrics")
+  @SuppressWarnings("rawtypes")
+@Test(dataProvider = "metrics")
   public void schemaRegistryKafkaReporterTest(String metricPrefix, String metricKey, Double value,
       Double truncatedValue,
       long timestamp) {
@@ -265,7 +267,8 @@ public class BaseKafkaReporterTest {
     final KafkaAvroSerializer serializer = new KafkaAvroSerializer(schemaRegistryClient);
 
     kafkaReporter = new BaseKafkaReporter() {
-      @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+      @SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
         return new KafkaProducer<Object, Object>(producerProps, serializer, serializer);
       }
     };
@@ -282,7 +285,8 @@ public class BaseKafkaReporterTest {
     reporterConfig.put("some.value.that.is.null", null);
 
     kafkaReporter = new BaseKafkaReporter() {
-      @Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
+      @SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override public KafkaProducer configureKafkaProducer(Properties producerProps) {
         AvroRecordSerializer serializer = new AvroRecordSerializer();
         return new KafkaProducer<GenericRecord, GenericRecord>(producerProps, serializer, serializer);
       }

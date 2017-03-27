@@ -1,5 +1,9 @@
 package com.verisign.storm.metrics.serializers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryEncoder;
@@ -9,10 +13,6 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.kafka.common.serialization.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Map;
 
 public class AvroRecordSerializer implements Serializer<GenericRecord> {
   private static Logger LOG = LoggerFactory.getLogger(AvroRecordSerializer.class);

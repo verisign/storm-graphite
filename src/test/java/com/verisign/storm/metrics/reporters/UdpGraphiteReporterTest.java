@@ -14,25 +14,22 @@
  */
 package com.verisign.storm.metrics.reporters;
 
-import com.google.common.base.Charsets;
-import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
-import com.verisign.storm.metrics.util.ConnectionFailureException;
+import static org.fest.assertions.api.Assertions.assertThat;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-
-import static org.fest.assertions.api.Assertions.assertThat;
+import com.google.common.base.Charsets;
+import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
+import com.verisign.storm.metrics.util.ConnectionFailureException;
 
 public class UdpGraphiteReporterTest {
 
