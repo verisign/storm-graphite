@@ -22,6 +22,7 @@ import com.google.common.collect.Maps;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.reporters.kafka.AvroKafkaReporter;
 import com.verisign.storm.metrics.reporters.kafka.BaseKafkaReporter;
+import com.verisign.storm.metrics.util.TagsHelper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.testng.annotations.AfterClass;
@@ -50,8 +51,7 @@ public class GraphiteMetricsConsumerTest {
   private Integer testStormSrcWorkerPort = 6700;
   private Integer testStormSrcTaskId = 3008;
   private String testTopologyName = "Example-Storm-Topology-Name-13-1425495763";
-  private String testPrefix = "testPrefix";
-  
+
   private String testGraphiteHost = "127.0.0.1";
   private Integer testGraphitePort = 2003;
   private InetSocketAddress testGraphiteServerSocketAddr;
@@ -89,7 +89,6 @@ public class GraphiteMetricsConsumerTest {
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
-    registrationArgument.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);
     when(topologyContext.getStormId()).thenReturn(testTopologyName);
@@ -100,7 +99,6 @@ public class GraphiteMetricsConsumerTest {
 
     // Then the reporter should be initialized with a Graphite reporter
     verify(topologyContext).getStormId();
-    assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
     assertThat(consumer.reporter).isInstanceOf(GraphiteReporter.class);
     assertThat(consumer.reporter).isNotNull();
@@ -114,7 +112,6 @@ public class GraphiteMetricsConsumerTest {
 
     Map<String, String> registrationArgument = Maps.newHashMap();
     registrationArgument.put(BaseKafkaReporter.KAFKA_TOPIC_NAME_FIELD, "testTopic");
-    registrationArgument.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
 
     TopologyContext topologyContext = mock(TopologyContext.class);
     when(topologyContext.getStormId()).thenReturn(testTopologyName);
@@ -125,7 +122,6 @@ public class GraphiteMetricsConsumerTest {
 
     // Then the reporter should be initialized with a Kafka reporter
     verify(topologyContext).getStormId();
-    assertThat(consumer.getGraphitePrefix()).isEqualTo(testPrefix);
     assertThat(consumer.getStormId()).isEqualTo(testTopologyName);
     assertThat(consumer.reporter).isInstanceOf(BaseKafkaReporter.class);
     assertThat(consumer.reporter).isNotNull();
@@ -139,7 +135,6 @@ public class GraphiteMetricsConsumerTest {
     Map<String, String> stormConfig = Maps.newHashMap();
     stormConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, testGraphiteHost);
     stormConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, testGraphitePort.toString());
-    stormConfig.put(GraphiteMetricsConsumer.GRAPHITE_PREFIX_OPTION, testPrefix);
     stormConfig.put(GraphiteMetricsConsumer.REPORTER_NAME, GraphiteReporter.class.getName());
 
     HashMap<String, Object> registrationArgs = new HashMap<String, Object>();
@@ -155,7 +150,7 @@ public class GraphiteMetricsConsumerTest {
 
     // Then the reporter should send properly formatted metric messages to Graphite
     HashMap<String, Double> expMap = buildExpectedMetricMap(dataPoints);
-    verify(consumer).appendToReporterBuffer(getExpectedMetricPrefix(), expMap, taskInfo.timestamp);
+    verify(consumer).appendToReporterBuffer(TagsHelper.convertToTags(testTopologyName, taskInfo), expMap, taskInfo.timestamp);
     String test = "";
   }
 
@@ -221,15 +216,5 @@ public class GraphiteMetricsConsumerTest {
       }
     }
     return expMap;
-  }
-
-  private String getExpectedMetricPrefix() {
-    String testSimpleTopologyName = "Example-Storm-Topology-Name";
-    return testPrefix + "." +
-        testSimpleTopologyName + "." +
-        testStormComponentID + "." +
-        testStormSrcWorkerHost + "." +
-        testStormSrcWorkerPort + "." +
-        testStormSrcTaskId;
   }
 }

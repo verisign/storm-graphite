@@ -17,6 +17,7 @@ package com.verisign.storm.metrics.reporters;
 import com.google.common.base.Charsets;
 import com.verisign.storm.metrics.reporters.graphite.GraphiteReporter;
 import com.verisign.storm.metrics.util.ConnectionFailureException;
+import com.verisign.storm.metrics.util.TagsHelper;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -64,6 +65,7 @@ public class GraphiteReporterTest {
     HashMap<String, Object> reporterConfig = new HashMap<String, Object>();
 
     reporterConfig.put(GraphiteReporter.GRAPHITE_HOST_OPTION, graphiteHost);
+    reporterConfig.put(TagsHelper.GRAPHITE_PREFIX_OPTION, ReporterDataProvider.testPrefix);
     reporterConfig.put(GraphiteReporter.GRAPHITE_PORT_OPTION, graphitePort.toString());
 
     graphiteReporter = new GraphiteReporter();
@@ -83,22 +85,8 @@ public class GraphiteReporterTest {
     graphiteReporter.disconnect();
   }
 
-  @DataProvider(name = "metrics")
-  public Object[][] metricsProvider() {
-    return new Object[][] { new Object[] { "test.storm", "metric1", 1.00, new Long("1408393534971"),
-        "test.storm.metric1 1.00 1408393534971\n" },
-        new Object[] { "test.storm", "metric2", 0.00, new Long("1408393534971"),
-            "test.storm.metric2 0.00 1408393534971\n" },
-        new Object[] { "test.storm", "metric3", 3.14, new Long("1408393534971"),
-            "test.storm.metric3 3.14 1408393534971\n" },
-        new Object[] { "test.storm", "metric3", 99.0, new Long("1408393534971"),
-            "test.storm.metric3 99.00 1408393534971\n" },
-        new Object[] { "test.storm", "metric3", 1e3, new Long("1408393534971"),
-            "test.storm.metric3 1000.00 1408393534971\n" } };
-  }
-
   @Test(dataProvider = "metrics")
-  public void sendMetricTupleAsFormattedStringToGraphiteServer(String metricPrefix, String metricKey, Double value,
+  public void sendMetricTupleAsFormattedStringToGraphiteServer(HashMap<String,String> tags, String metricKey, Double value,
       long timestamp,
       String expectedMessageReceived) throws IOException {
     // Given a tuple representing a (metricPath, value, timestamp) metric (injected via data provider)
@@ -106,7 +94,7 @@ public class GraphiteReporterTest {
     HashMap<String, Double> values = new HashMap<String, Double>();
     values.put(metricKey, value);
     // When the reporter sends the metric
-    graphiteReporter.appendToBuffer(metricPrefix, values, timestamp);
+    graphiteReporter.appendToBuffer(tags, values, timestamp);
     graphiteReporter.sendBufferContents();
 
     // Then the server should receive a properly formatted string representing the metric
@@ -115,4 +103,10 @@ public class GraphiteReporterTest {
     String actualMessageReceived = new String(receive.array(), 0, bytesRead, DEFAULT_CHARSET);
     assertThat(actualMessageReceived).isEqualTo(expectedMessageReceived);
   }
+
+  @DataProvider(name = "metrics")
+  public Object[][] metricsProvider() {
+    return new ReporterDataProvider().metricsProvider();
+  }
+
 }
