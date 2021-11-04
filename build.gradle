@@ -229,3 +229,10 @@ shadowJar {
 
 // `build` should also create the uber/shadow jar by default.
 build.dependsOn(shadowJar)
+
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.incremental = true
+    }
+
+}
